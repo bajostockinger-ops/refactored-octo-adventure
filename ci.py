@@ -212,6 +212,10 @@ THEMES: dict[str, dict] = {
 
 THEME_ORDER = ["nord", "violet", "ember", "matrix", "mono"]
 
+# Deckender Hintergrund je Theme. Ohne ihn laesst CI den Terminal-Hintergrund
+# durch -- schoen bei einfarbigen Terminals, unruhig bei transparenten.
+THEME_BG = {"nord": 235, "violet": 234, "ember": 233, "matrix": 232, "mono": 234}
+
 # Standard-ANSI-Naeherung fuer 256-Farben, wenn das Terminal nur 8/16 kann.
 _CUBE = [0, 95, 135, 175, 215, 255]
 
@@ -252,14 +256,19 @@ def _down(c: int, colors: int) -> tuple[int, bool]:
 class Palette:
     """Verwaltet curses-Farbpaare fuer die semantischen Rollen eines Themes."""
 
-    def __init__(self, theme: str = "nord"):
+    def __init__(self, theme: str = "nord", opaque: bool = False):
         self.pairs: dict[str, int] = {}
         self.extra: dict[tuple[int, int], int] = {}
         self.next_pair = 1
         self.colors = 0
         self.ok = False
+        self.opaque = opaque
         self.theme = theme if theme in THEMES else "nord"
         self.load(self.theme)
+
+    @property
+    def base_bg(self) -> int:
+        return THEME_BG.get(self.theme, 235) if self.opaque else -1
 
     def load(self, theme: str) -> None:
         self.theme = theme if theme in THEMES else "nord"
@@ -269,9 +278,10 @@ class Palette:
         if not self.ok:
             return
         spec = THEMES[self.theme]
+        fallback = self.base_bg
         for role, (fg, bg) in spec.items():
             f, bold = _down(fg, self.colors)
-            b, _ = _down(bg, self.colors)
+            b, _ = _down(bg if bg != -1 else fallback, self.colors)
             pid = self._alloc(f, b)
             self.pairs[role] = curses.color_pair(pid) | (curses.A_BOLD if bold else 0)
 
@@ -315,7 +325,8 @@ class Palette:
             a = self.pairs.get("text", 0)
         else:
             f, b2 = _down(fg, self.colors)
-            a = curses.color_pair(self._alloc(f, -1)) | (curses.A_BOLD if b2 else 0)
+            b, _ = _down(self.base_bg, self.colors)
+            a = curses.color_pair(self._alloc(f, b)) | (curses.A_BOLD if b2 else 0)
         if bold:
             a |= curses.A_BOLD
         if dim:
@@ -547,6 +558,9 @@ DEFAULT_MENU = r'''
 
 [ui]
 theme  = "nord"      # nord | violet | ember | matrix | mono
+opaque = false       # true = eigener Hintergrund statt des Terminal-
+                     # hintergrunds. Bei transparenten Terminals besser.
+                     # Umschalten im Betrieb: Strg-B
 glyphs = "auto"      # auto | unicode | ascii
 clock  = true
 detail = true        # rechtes Detail-Panel
@@ -1528,6 +1542,7 @@ quote = false
 @dataclass
 class Config:
     theme: str = "nord"
+    opaque: bool = False
     glyphs: str = "auto"
     clock: bool = True
     detail: bool = True
@@ -1572,6 +1587,7 @@ def parse_config(text: str, path: Path | None = None) -> Config:
 
     ui = data.get("ui") or {}
     cfg.theme = str(ui.get("theme", "nord"))
+    cfg.opaque = bool(ui.get("opaque", False))
     cfg.glyphs = str(ui.get("glyphs", "auto"))
     cfg.clock = bool(ui.get("clock", True))
     cfg.detail = bool(ui.get("detail", True))
@@ -2140,8 +2156,11 @@ class App:
         self.cfg = cfg
         self.state = state
         self.g = pick_glyphs(cfg.glyphs)
-        self.pal = Palette(state.data.get("theme") or cfg.theme)
+        opaque = state.data.get("opaque")
+        self.pal = Palette(state.data.get("theme") or cfg.theme,
+                           cfg.opaque if opaque is None else bool(opaque))
         self.pal.start()
+        self.apply_background()
         self.ctx = Context()
         self.stack: list[str] = ["root"]
         self.sel: dict[str, int] = {}
@@ -2158,6 +2177,23 @@ class App:
             self.notify(cfg.problems[0], "warn", 8)
 
     # ------------------------------------------------------------------ Hilfen
+    def apply_background(self) -> None:
+        """Leere Flaechen einfaerben -- oder das Terminal durchscheinen lassen."""
+        try:
+            self.scr.bkgd(" ", self.pal("text"))
+        except curses.error:
+            pass
+
+    def toggle_opaque(self) -> None:
+        self.pal.opaque = not self.pal.opaque
+        self.pal.load(self.pal.theme)
+        self.apply_background()
+        self.state.data["opaque"] = self.pal.opaque
+        self.state.save()
+        self.notify("Hintergrund: %s" % ("deckend" if self.pal.opaque
+                                         else "Terminal durchscheinend"),
+                    "ok", 3)
+
     def notify(self, text: str, kind: str = "info", secs: float = 4.0) -> None:
         self.msg = text
         self.msg_kind = kind
@@ -2783,6 +2819,7 @@ class App:
                 ("q / Esc / %s" % g["enter"], "Fenster schliessen"),
             ]),
             ("Allgemein", [
+                ("Strg-B", "Hintergrund deckend / durchscheinend"),
                 ("Strg-O", "letzte Ausgabe nochmal ansehen"),
                 ("Strg-T", "Farbschema durchschalten"),
                 ("Strg-R", "menu.toml neu laden"),
@@ -3603,6 +3640,7 @@ class App:
             i = -1
         nxt = THEME_ORDER[(i + 1) % len(THEME_ORDER)]
         self.pal.load(nxt)
+        self.apply_background()
         self.state.data["theme"] = nxt
         self.state.save()
         self.notify("Farbschema: %s" % nxt, "ok", 2)
@@ -3709,6 +3747,9 @@ class App:
             return
         if ch == "\x14":                        # Strg-T
             self.cycle_theme()
+            return
+        if ch == "\x02":                        # Strg-B
+            self.toggle_opaque()
             return
         if ch == "\x0f":                        # Strg-O
             if self.last_job is not None:
@@ -3869,6 +3910,8 @@ def main(argv: list[str]) -> int:
         print("  --theme NAME      %s" % " | ".join(THEME_ORDER))
         print("  --config PFAD     andere menu.toml benutzen")
         print("  --no-detail       rechtes Panel ausschalten")
+        print("  --opaque          eigener Hintergrund (bei transparentem Terminal)")
+        print("  --transparent     Terminal-Hintergrund durchlassen")
         print("  --dump-config     eingebaute Standard-Konfiguration ausgeben")
         print("  --check           Konfiguration pruefen und beenden")
         print("  --version         Version ausgeben")
@@ -3893,6 +3936,10 @@ def main(argv: list[str]) -> int:
         cfg.glyphs = "unicode"
     if "--no-detail" in args:
         cfg.detail = False
+    if "--opaque" in args:
+        cfg.opaque = True
+    if "--transparent" in args:
+        cfg.opaque = False
     if "--theme" in args:
         i = args.index("--theme")
         if i + 1 < len(args) and args[i + 1] in THEMES:
@@ -3932,6 +3979,8 @@ def main(argv: list[str]) -> int:
     state = State()
     if cfg.theme in THEMES and "--theme" in args:
         state.data["theme"] = cfg.theme
+    if "--opaque" in args or "--transparent" in args:
+        state.data["opaque"] = cfg.opaque
 
     locale.setlocale(locale.LC_ALL, "")
     os.environ.setdefault("ESCDELAY", "25")

@@ -59,6 +59,7 @@ reicht `python3 -m pip install --user tomli`.
 |---|---|
 | `ci: command not found` | `~/.local/bin` fehlt im `PATH`: `echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc` (bzw. `~/.bashrc`), dann neue Shell |
 | Verzeichniswechsel wirkt nach dem Beenden nicht | Die `source`-Zeile fehlt in der rc-Datei **deiner** Shell. Der Installer trägt sie dort ein; von Hand: `source "${XDG_CONFIG_HOME:-$HOME/.config}/ci-shell/shell-init.sh"` |
+| Hinter CI scheint das Fenster dahinter durch | Dein Terminal ist transparent, CI lässt den Hintergrund durch. `Strg-B` schaltet auf einen deckenden um, dauerhaft: `ci --opaque` oder `opaque = true` in `menu.toml` |
 | Rahmen und Symbole sind Buchstabensalat | `ci --ascii`, oder dauerhaft in `menu.toml`: `glyphs = "ascii"` |
 | „Terminal zu klein" | CI braucht mindestens 46x14 Zeichen |
 | fish als Shell | CI läuft normal, nur die Shell-Funktion für den Verzeichniswechsel gibt es bisher nur für bash und zsh |
@@ -99,6 +100,7 @@ sich nicht versehentlich starten.
 | `Strg-P` | Suche über *alle* Befehle aller Menüs |
 | `!` | freien Shell-Einzeiler eingeben |
 | `?` | Hilfe mit der ganzen Tastenbelegung |
+| `Strg-B` | Hintergrund deckend / Terminal durchscheinend |
 | `Strg-O` | letzte Ausgabe nochmal ansehen |
 | `Strg-T` | Farbschema durchschalten |
 | `Strg-R` | `menu.toml` neu laden |
@@ -205,6 +207,8 @@ ci --ascii          nur ASCII-Zeichen (alte Konsolen, 8 Farben)
 ci --unicode        Unicode erzwingen
 ci --theme NAME     nord | violet | ember | matrix | mono
 ci --no-detail      rechtes Panel aus
+ci --opaque         eigener Hintergrund (bei transparentem Terminal)
+ci --transparent    Terminal-Hintergrund durchlassen
 ci --config PFAD    andere menu.toml
 ci --check          Konfiguration prüfen
 ci --dump-config    Standard-Konfiguration ausgeben
