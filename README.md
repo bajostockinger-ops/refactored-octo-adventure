@@ -53,6 +53,16 @@ Ohne Installation geht es genauso:
 Gebraucht wird Python 3.11 oder neuer (für `tomllib`). Auf älteren Versionen
 reicht `python3 -m pip install --user tomli`.
 
+### Wenn etwas klemmt
+
+| Symptom | Grund und Abhilfe |
+|---|---|
+| `ci: command not found` | `~/.local/bin` fehlt im `PATH`: `echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc` (bzw. `~/.bashrc`), dann neue Shell |
+| Verzeichniswechsel wirkt nach dem Beenden nicht | Die `source`-Zeile fehlt in der rc-Datei **deiner** Shell. Der Installer trägt sie dort ein; von Hand: `source "${XDG_CONFIG_HOME:-$HOME/.config}/ci-shell/shell-init.sh"` |
+| Rahmen und Symbole sind Buchstabensalat | `ci --ascii`, oder dauerhaft in `menu.toml`: `glyphs = "ascii"` |
+| „Terminal zu klein" | CI braucht mindestens 46x14 Zeichen |
+| fish als Shell | CI läuft normal, nur die Shell-Funktion für den Verzeichniswechsel gibt es bisher nur für bash und zsh |
+
 ## Die Oberfläche
 
 | Bereich | Was dort steht |

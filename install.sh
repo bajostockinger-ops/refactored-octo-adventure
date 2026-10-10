@@ -81,36 +81,61 @@ INITEOF
 ok "Shell-Anbindung geschrieben: ${INIT}"
 
 SRCLINE="source \"\${XDG_CONFIG_HOME:-\$HOME/.config}/ci-shell/shell-init.sh\""
-hooked=0
-for rc in "$HOME/.bashrc" "$HOME/.zshrc"; do
+
+# Die rc-Datei der tatsaechlich benutzten Shell kommt zuerst dran -- und nur
+# sie ist wirklich wichtig. Die andere wird nur angeboten, wenn sie existiert.
+case "$(basename "${SHELL:-}")" in
+  zsh)  RC_LIST=("$HOME/.zshrc" "$HOME/.bashrc"); MY_RC="$HOME/.zshrc" ;;
+  bash) RC_LIST=("$HOME/.bashrc" "$HOME/.zshrc"); MY_RC="$HOME/.bashrc" ;;
+  fish) RC_LIST=();                               MY_RC="" ;;
+  *)    RC_LIST=("$HOME/.bashrc" "$HOME/.zshrc"); MY_RC="" ;;
+esac
+
+# Auch nach Strg-C steht noch da, was zu tun ist.
+finish() {
+  case ":$PATH:" in
+    *":$PREFIX:"*) ;;
+    *) warn "${PREFIX} ist nicht im PATH. Fuer bash/zsh:"
+       say "  echo 'export PATH=\"${PREFIX}:\$PATH\"' >> ${MY_RC:-~/.profile}" ;;
+  esac
+  if [ "${HOOKED:-0}" = 0 ]; then
+    printf '\n  Noch zu tun -- diese Zeile in %s eintragen:\n' "${MY_RC:-deine Shell-Konfiguration}"
+    say "  ${SRCLINE}"
+    say "  (ohne sie laeuft CI trotzdem, nur der Verzeichniswechsel"
+    say "   beim Beenden wirkt dann nicht in der Shell weiter)"
+  fi
+  printf '\n\033[1mFertig.\033[0m  Neue Shell oeffnen und  \033[1mci\033[0m  tippen.\n\n'
+}
+trap finish EXIT
+
+HOOKED=0
+if [ "${#RC_LIST[@]}" = 0 ]; then
+  warn "fish erkannt -- die Shell-Funktion gibt es nur fuer bash und zsh."
+  say  "CI selbst laeuft normal; nur der Verzeichniswechsel beim Beenden fehlt."
+fi
+for rc in ${RC_LIST[@]+"${RC_LIST[@]}"}; do
   [ -f "$rc" ] || continue
   if grep -Fq "ci-shell/shell-init.sh" "$rc"; then
     say "schon eingebunden in $(basename "$rc")"
-    hooked=1
+    HOOKED=1
     continue
   fi
+  [ "$HOOKED" = 1 ] && [ "$rc" != "$MY_RC" ] && continue
+  label="$(basename "$rc")"
+  [ "$rc" = "$MY_RC" ] && label="${label}  (deine Shell)"
   if [ "$ASSUME_YES" = 1 ]; then
     answer=j
-  else
-    printf '  Zeile in %s eintragen? [j/N] ' "$(basename "$rc")"
+  elif [ -r /dev/tty ]; then
+    printf '  Zeile in %s eintragen? [J/n] ' "$label"
     read -r answer </dev/tty || answer=n
+    [ -z "$answer" ] && answer=j
+  else
+    answer=n                      # kein Terminal (z. B. in einer Pipeline)
   fi
   case "$answer" in
-    j|J|y|Y)
-      printf '\n# CI\n%s\n' "$SRCLINE" >> "$rc"
-      ok "eingetragen in $(basename "$rc")"
-      hooked=1 ;;
-    *) say "uebersprungen: $(basename "$rc")" ;;
+    n|N)   say "uebersprungen: $(basename "$rc")" ;;
+    *)     printf '\n# CI\n%s\n' "$SRCLINE" >> "$rc"
+           ok "eingetragen in $(basename "$rc")"
+           HOOKED=1 ;;
   esac
 done
-if [ "$hooked" = 0 ]; then
-  say "Von Hand eintragen:  ${SRCLINE}"
-fi
-
-case ":$PATH:" in
-  *":$PREFIX:"*) ;;
-  *) warn "${PREFIX} ist nicht im PATH. Eintragen mit:"
-     say "  export PATH=\"${PREFIX}:\$PATH\"" ;;
-esac
-
-printf '\n\033[1mFertig.\033[0m  Neue Shell oeffnen und  \033[1mci\033[0m  tippen.\n\n'
