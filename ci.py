@@ -562,6 +562,12 @@ opaque = false       # true = eigener Hintergrund statt des Terminal-
                      # hintergrunds. Bei transparenten Terminals besser.
                      # Umschalten im Betrieb: Strg-B
 glyphs = "auto"      # auto | unicode | ascii
+shell_aliases = false
+                     # true = Befehle laufen in einer interaktiven Shell,
+                     # damit deine eigenen Aliase und Funktionen aus
+                     # ~/.zshrc bzw. ~/.bashrc gelten. Nachteil: alles,
+                     # was deine rc-Datei ausgibt, landet mit in der
+                     # Ausgabe.
 clock  = true
 detail = true        # rechtes Detail-Panel
 banner = "CI"
@@ -685,6 +691,122 @@ icon = "▷"
 label = "Medien"
 desc = "Video, Audio und Bilder umwandeln und zuschneiden."
 goto = "medien"
+
+[[menu.items]]
+heading = "Shell, Konten, Sicherheit"
+
+[[menu.items]]
+key = "Z"
+icon = "$"
+label = "Zsh und Shell"
+desc = "Aliase, Funktionen, Historie, Tastenkuerzel, Variablen."
+goto = "zsh"
+
+[[menu.items]]
+key = "U"
+icon = "☺"
+label = "Benutzer und Rechte"
+desc = "Wer darf was, Gruppen, Anmeldungen, Dateirechte."
+goto = "konten"
+
+[[menu.items]]
+key = "S"
+icon = "⛨"
+label = "Sicherheit pruefen"
+desc = "Unveraenderte Programme, offene Ports, Updates, Anmeldeversuche."
+goto = "sicherheit"
+
+[[menu.items]]
+key = "F"
+icon = "◆"
+label = "Finden"
+desc = "Dateien und Inhalte suchen, auch mit fd, ripgrep, fzf."
+goto = "finden"
+
+[[menu.items]]
+key = "u"
+icon = "↓"
+label = "Uebertragen und Web"
+desc = "curl, wget, rsync, Dateien teilen, APIs abfragen."
+goto = "transfer"
+
+[[menu.items]]
+key = "A"
+icon = "⌖"
+label = "Netzwerk-Analyse"
+desc = "Eigenes Netz scannen, Pakete mitschneiden, whois, Ports."
+goto = "analyse"
+
+[[menu.items]]
+heading = "Sprachen und Daten"
+
+[[menu.items]]
+key = "P"
+icon = "◎"
+label = "Python"
+desc = "venv, pip, Formatierung, Module, kleiner Webserver."
+goto = "python"
+requires = ["python3"]
+
+[[menu.items]]
+key = "N"
+icon = "⬢"
+label = "Node und Web"
+desc = "npm, Pakete, Audit, lokaler Server."
+goto = "node"
+requires = ["node"]
+
+[[menu.items]]
+key = "D"
+icon = "▤"
+label = "Datenbanken"
+desc = "SQLite, PostgreSQL, MySQL, Redis."
+goto = "db"
+
+[[menu.items]]
+key = "r"
+icon = "±"
+label = "Rechnen und Umwandeln"
+desc = "Taschenrechner, Zahlensysteme, Hashes, base64, Passwoerter."
+goto = "rechnen"
+
+[[menu.items]]
+heading = "Rechner und Umgebung"
+
+[[menu.items]]
+key = "L"
+icon = "▤"
+label = "Laufwerke"
+desc = "Einhaengen, Platz, USB-Sticks, Abbilder."
+goto = "laufwerke"
+
+[[menu.items]]
+key = "B"
+icon = "⧉"
+label = "Sichern"
+desc = "Kopien anlegen, abgleichen, Doppelte finden."
+goto = "backup"
+
+[[menu.items]]
+key = "l"
+icon = "≣"
+label = "Logs und Beobachten"
+desc = "Journal, dmesg, Dateien mitlesen, Befehle wiederholen."
+goto = "logs"
+
+[[menu.items]]
+key = "T"
+icon = "◔"
+label = "Zeit"
+desc = "Datum, Kalender, Zeitzone, Stoppuhr, geplante Aufgaben."
+goto = "zeit"
+
+[[menu.items]]
+key = "o"
+icon = "▢"
+label = "Oberflaeche"
+desc = "Bildschirme, Tastaturlayout, Zwischenablage, Screenshots."
+goto = "desktop"
 
 [[menu.items]]
 heading = "Schnellzugriff"
@@ -2456,6 +2578,1690 @@ echo "$n Bilder nach ./klein/ geschrieben."
 """
 requires = ["convert"]
 
+# --------------------------------------------------------------------- Zsh
+[[menu]]
+id = "zsh"
+title = "Zsh"
+subtitle = "deine Shell von innen"
+
+[[menu.items]]
+key = "a"
+icon = "≣"
+label = "Deine Aliase"
+desc = "Liest die rc-Datei, zeigt also auch deine eigenen."
+run = "$SHELL -ic 'alias' 2>/dev/null | sort"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "f"
+icon = "≣"
+label = "Deine Funktionen"
+run = "$SHELL -ic 'print -l ${(k)functions}' 2>/dev/null | grep -v '^_' | sort | head -60"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "t"
+icon = "◆"
+label = "Was ist dieser Befehl?"
+desc = "Alias, Funktion, eingebaut oder Programm auf der Platte?"
+run = "$SHELL -ic 'whence -va {name}' 2>/dev/null || type -a {name}"
+[[menu.items.prompts]]
+name = "name"
+label = "Befehl"
+
+[[menu.items]]
+key = "w"
+icon = "◆"
+label = "Wo liegt das Programm?"
+run = "which -a {name}; echo; readlink -f $(command -v {name}) 2>/dev/null"
+[[menu.items.prompts]]
+name = "name"
+label = "Programmname"
+
+[[menu.items]]
+key = "h"
+icon = "◔"
+label = "Deine haeufigsten Befehle"
+run = "cat ~/.zsh_history ~/.bash_history 2>/dev/null | sed 's/^[^;]*;//' | awk '{print $1}' | sort | uniq -c | sort -rn | head -30"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "H"
+icon = "◆"
+label = "Historie durchsuchen"
+run = "cat ~/.zsh_history ~/.bash_history 2>/dev/null | sed 's/^[^;]*;//' | grep -i -- {muster} | tail -40"
+[[menu.items.prompts]]
+name = "muster"
+label = "Suchbegriff"
+
+[[menu.items]]
+key = "b"
+icon = "⌨"
+label = "Tastenkuerzel der Shell"
+run = "$SHELL -ic 'bindkey' 2>/dev/null | head -60"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "o"
+icon = "◇"
+label = "Eingeschaltete Optionen"
+run = "$SHELL -ic 'setopt' 2>/dev/null | sort | head -60"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "e"
+icon = "≣"
+label = "Umgebungsvariablen"
+run = "env | sort"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "p"
+icon = "→"
+label = "PATH, Eintrag fuer Eintrag"
+run = "echo $PATH | tr ':' '\\n' | nl"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "P"
+icon = "◆"
+label = "Doppelte PATH-Eintraege"
+run = "echo $PATH | tr ':' '\\n' | sort | uniq -d | sed 's/^/doppelt: /' ; echo 'geprueft.'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "m"
+icon = "◔"
+label = "Wie lange braucht ein Befehl?"
+run = "time ( {befehl} )"
+[[menu.items.prompts]]
+name = "befehl"
+label = "Befehl"
+quote = false
+
+[[menu.items]]
+key = "v"
+icon = "◆"
+label = "Shell-Versionen"
+run = "echo \"SHELL   $SHELL\"; zsh --version 2>/dev/null; bash --version 2>/dev/null | head -1"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "r"
+icon = "✎"
+label = "zshrc bearbeiten"
+run = "${EDITOR:-nano} ~/.zshrc"
+interactive = true
+
+[[menu.items]]
+key = "c"
+icon = "◆"
+label = "zshrc auf Syntaxfehler pruefen"
+run = "zsh -n ~/.zshrc && echo 'Keine Syntaxfehler in ~/.zshrc'"
+requires = ["zsh"]
+
+# --------------------------------------------------- Benutzer und Rechte
+[[menu]]
+id = "konten"
+title = "Benutzer und Rechte"
+
+[[menu.items]]
+heading = "Wer bin ich, wer darf was"
+
+[[menu.items]]
+key = "i"
+icon = "☺"
+label = "Ich selbst"
+run = "id; echo; echo 'Gruppen:'; groups | tr ' ' '\\n' | sort"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "r"
+icon = "⛨"
+label = "Konten mit Root-Rechten"
+desc = "Hier darf nur 'root' stehen."
+run = "awk -F: '$3==0 {printf \"%-20s UID %s\\n\", $1, $3}' /etc/passwd"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "e"
+icon = "☺"
+label = "Echte Login-Konten"
+desc = "Alles ab UID 1000, also Menschen statt Dienste."
+run = "awk -F: '$3>=1000 && $3<65534 {printf \"%-20s UID %-6s %s\\n\", $1, $3, $6}' /etc/passwd"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "d"
+icon = "◉"
+label = "Dienstkonten"
+desc = "Unter UID 1000. Gehoeren zu Programmen, nicht zu Menschen."
+run = "awk -F: '$3<1000 {printf \"%-20s UID %s\\n\", $1, $3}' /etc/passwd | sort -t' ' -k1"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "s"
+icon = "⛨"
+label = "Wer darf sudo?"
+run = "getent group sudo admin wheel 2>/dev/null; echo; echo '== meine sudo-Rechte =='; sudo -ln 2>/dev/null || echo '(Passwort noetig fuer die Anzeige)'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "g"
+icon = "≣"
+label = "Alle Gruppen"
+run = "cut -d: -f1,3 /etc/group | sort -t: -k2 -n | awk -F: '{printf \"%-24s GID %s\\n\", $1, $2}'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "m"
+icon = "◆"
+label = "Mitglieder einer Gruppe"
+run = "getent group {gruppe} || echo 'Gruppe gibt es nicht.'"
+[[menu.items.prompts]]
+name = "gruppe"
+label = "Gruppenname"
+
+[[menu.items]]
+heading = "Anmeldungen"
+
+[[menu.items]]
+key = "w"
+icon = "☺"
+label = "Wer ist gerade angemeldet"
+run = "who -a 2>/dev/null || who"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "l"
+icon = "◔"
+label = "Letzte Anmeldungen"
+run = "last -n 25"
+requires = ["last"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "F"
+icon = "✗"
+label = "Fehlgeschlagene Anmeldungen"
+run = "sudo lastb -n 25 2>/dev/null || journalctl -u ssh -g 'Failed password' -n 25 --no-pager 2>/dev/null || echo 'Keine Daten lesbar.'"
+interactive = true
+
+[[menu.items]]
+heading = "Dateirechte"
+
+[[menu.items]]
+key = "p"
+icon = "◆"
+label = "Rechte einer Datei im Klartext"
+run = "stat -c '%A  %U:%G  %s Bytes  %n' {pfad}; echo; ls -ld {pfad}"
+[[menu.items.prompts]]
+name = "pfad"
+label = "Datei oder Ordner"
+
+[[menu.items]]
+key = "c"
+icon = "✎"
+label = "Rechte setzen"
+run = "chmod {rechte} {pfad} && stat -c '%A  %n' {pfad}"
+confirm = true
+[[menu.items.prompts]]
+name = "pfad"
+label = "Datei oder Ordner"
+[[menu.items.prompts]]
+name = "rechte"
+label = "Rechte, z. B. 644 oder u+x"
+quote = false
+
+[[menu.items]]
+key = "o"
+icon = "✎"
+label = "Besitzer aendern"
+run = "sudo chown {wer} {pfad} && ls -ld {pfad}"
+interactive = true
+confirm = true
+[[menu.items.prompts]]
+name = "pfad"
+label = "Datei oder Ordner"
+[[menu.items.prompts]]
+name = "wer"
+label = "benutzer:gruppe"
+
+[[menu.items]]
+key = "u"
+icon = "⛨"
+label = "Programme mit Sonderrechten hier"
+desc = "setuid und setgid im aktuellen Ordner und darunter."
+run = "find . -xdev \\( -perm -4000 -o -perm -2000 \\) -type f -exec ls -l {{}} + 2>/dev/null | head -40 || echo 'keine gefunden'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "k"
+icon = "◆"
+label = "Was gehoert mir hier nicht?"
+run = "find . -xdev ! -user $(id -un) -maxdepth 3 -exec ls -ld {{}} + 2>/dev/null | head -30 || echo 'alles deins'"
+tags = ["lesen"]
+
+# ----------------------------------------------------------- Sicherheit
+[[menu]]
+id = "sicherheit"
+title = "Sicherheit"
+subtitle = "pruefen, nicht raten"
+
+[[menu.items]]
+key = "d"
+icon = "⛨"
+label = "Wurden Programme veraendert?"
+desc = "Vergleicht jede Datei aus jedem Paket mit der Originalpruefsumme."
+run = "sudo debsums -ca 2>&1 | head -40; echo; echo '(leere Liste = alles unveraendert)'"
+interactive = true
+requires = ["debsums"]
+
+[[menu.items]]
+key = "D"
+icon = "+"
+label = "debsums nachinstallieren"
+run = "sudo apt install debsums"
+interactive = true
+requires = ["apt"]
+
+[[menu.items]]
+key = "p"
+icon = "●"
+label = "Was lauscht auf Verbindungen?"
+run = "ss -tulpn 2>/dev/null || netstat -tulpn"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "c"
+icon = "⌖"
+label = "Bestehende Verbindungen nach aussen"
+run = "ss -tup state established 2>/dev/null | head -40"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "u"
+icon = "↑"
+label = "Sicherheitsupdates verfuegbar?"
+run = "apt list --upgradable 2>/dev/null | grep -i secur || echo 'Keine als Sicherheitsupdate markierten Pakete.'"
+requires = ["apt"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "f"
+icon = "⛨"
+label = "Firewall-Status"
+run = "sudo ufw status verbose 2>/dev/null || sudo iptables -L -n 2>/dev/null | head -30 || echo 'Keine Firewall-Info lesbar.'"
+interactive = true
+
+[[menu.items]]
+key = "r"
+icon = "◆"
+label = "Zuletzt geaenderte Systemdateien"
+desc = "Alles unter /etc, das in den letzten 7 Tagen angefasst wurde."
+run = "sudo find /etc -xdev -mtime -7 -type f -printf '%TY-%Tm-%Td %TH:%TM  %p\\n' 2>/dev/null | sort -r | head -40"
+interactive = true
+
+[[menu.items]]
+key = "s"
+icon = "◉"
+label = "Dienste, die beim Start laufen"
+run = "systemctl list-unit-files --state=enabled --no-pager"
+requires = ["systemctl"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "a"
+icon = "◔"
+label = "Automatische Aufgaben"
+desc = "Cron und systemd-Timer -- wo sich Unerwuenschtes einnistet."
+run = "echo '== deine Cron-Eintraege =='; crontab -l 2>/dev/null || echo keine; echo; echo '== System-Cron =='; ls -la /etc/cron.* 2>/dev/null | head -30; echo; echo '== Timer =='; systemctl list-timers --all --no-pager 2>/dev/null | head -20"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "l"
+icon = "≣"
+label = "Anmeldungen im Journal"
+run = "journalctl -g 'session opened|Failed password|sudo:' -n 40 --no-pager 2>/dev/null || echo 'Kein Journal lesbar.'"
+requires = ["journalctl"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "k"
+icon = "⛨"
+label = "Rootkit-Pruefung"
+run = "sudo rkhunter --check --skip-keypress 2>/dev/null | tail -40 || echo 'rkhunter ist nicht installiert (sudo apt install rkhunter).'"
+interactive = true
+
+# --------------------------------------------------------------- Finden
+[[menu]]
+id = "finden"
+title = "Finden"
+
+[[menu.items]]
+key = "n"
+icon = "◆"
+label = "Datei nach Name"
+run = "find . -iname '*'{name}'*' -not -path '*/.git/*' 2>/dev/null | head -60"
+[[menu.items.prompts]]
+name = "name"
+label = "Teil des Dateinamens"
+
+[[menu.items]]
+key = "f"
+icon = "◆"
+label = "Schnellsuche mit fd"
+run = "fd --hidden --exclude .git {muster} | head -60"
+requires = ["fd"]
+[[menu.items.prompts]]
+name = "muster"
+label = "Suchmuster"
+
+[[menu.items]]
+key = "i"
+icon = "◆"
+label = "Inhalt durchsuchen"
+run = "grep -rnI --color=always --exclude-dir=.git -e {muster} . | head -100"
+[[menu.items.prompts]]
+name = "muster"
+label = "Suchmuster"
+
+[[menu.items]]
+key = "g"
+icon = "◆"
+label = "Inhalt durchsuchen mit ripgrep"
+run = "rg --color=always --hidden --glob '!.git' {muster} | head -100"
+requires = ["rg"]
+[[menu.items.prompts]]
+name = "muster"
+label = "Suchmuster"
+
+[[menu.items]]
+key = "l"
+icon = "◆"
+label = "Systemweit suchen (locate)"
+run = "locate -i {name} | head -60"
+requires = ["locate"]
+[[menu.items.prompts]]
+name = "name"
+label = "Name"
+
+[[menu.items]]
+key = "L"
+icon = "⟳"
+label = "Suchindex aktualisieren"
+run = "sudo updatedb && echo 'Index ist aktuell.'"
+interactive = true
+requires = ["updatedb"]
+
+[[menu.items]]
+key = "e"
+icon = "◆"
+label = "Nach Endung"
+run = "find . -type f -name '*.'{endung} -not -path '*/.git/*' | head -60"
+[[menu.items.prompts]]
+name = "endung"
+label = "Endung ohne Punkt, z. B. pdf"
+
+[[menu.items]]
+key = "s"
+icon = "▤"
+label = "Groesser als"
+run = "find . -type f -size +{mb}M -printf '%s\\t%p\\n' 2>/dev/null | sort -rn | awk '{printf \"%8.1f MB  %s\\n\", $1/1048576, $2}' | head -30"
+[[menu.items.prompts]]
+name = "mb"
+label = "Mindestgroesse in MB"
+default = "50"
+quote = false
+
+[[menu.items]]
+key = "t"
+icon = "◔"
+label = "Geaendert in den letzten Tagen"
+run = "find . -type f -mtime -{tage} -not -path '*/.git/*' -printf '%TY-%Tm-%Td %TH:%TM  %p\\n' | sort -r | head -40"
+[[menu.items.prompts]]
+name = "tage"
+label = "Anzahl Tage"
+default = "3"
+quote = false
+
+[[menu.items]]
+key = "x"
+icon = "◆"
+label = "Leere Dateien und Ordner"
+run = "echo '== leere Dateien =='; find . -type f -empty -not -path '*/.git/*' | head -20; echo; echo '== leere Ordner =='; find . -type d -empty -not -path '*/.git/*' | head -20"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "b"
+icon = "◆"
+label = "Datei interaktiv auswaehlen"
+desc = "fzf: tippen, Pfeile, Enter. Zeigt danach den Pfad."
+run = "fzf --height 100% --preview 'head -40 {{}}'"
+interactive = true
+requires = ["fzf"]
+
+[[menu.items]]
+key = "w"
+icon = "◆"
+label = "Welches Programm steckt dahinter?"
+run = "whereis {name}; echo; command -v {name} && file $(command -v {name})"
+[[menu.items.prompts]]
+name = "name"
+label = "Programmname"
+
+# ------------------------------------------------------ Uebertragen / Web
+[[menu]]
+id = "transfer"
+title = "Uebertragen und Web"
+
+[[menu.items]]
+key = "d"
+icon = "↓"
+label = "Datei herunterladen"
+run = "curl -L --progress-bar -O {url} && ls -lh"
+requires = ["curl"]
+[[menu.items.prompts]]
+name = "url"
+label = "URL"
+
+[[menu.items]]
+key = "w"
+icon = "↓"
+label = "Mit wget herunterladen"
+run = "wget --progress=bar:force {url}"
+interactive = true
+requires = ["wget"]
+[[menu.items.prompts]]
+name = "url"
+label = "URL"
+
+[[menu.items]]
+key = "g"
+icon = "↓"
+label = "Seite abrufen und anzeigen"
+run = "curl -sSL --max-time 20 {url} | head -120"
+requires = ["curl"]
+[[menu.items.prompts]]
+name = "url"
+label = "URL"
+
+[[menu.items]]
+key = "j"
+icon = "◇"
+label = "JSON-API abfragen"
+run = "curl -sSL --max-time 20 {url} | jq -C . | head -80"
+requires = ["curl", "jq"]
+[[menu.items.prompts]]
+name = "url"
+label = "URL"
+
+[[menu.items]]
+key = "h"
+icon = "≣"
+label = "Nur die Header"
+run = "curl -sSI --max-time 15 {url}"
+requires = ["curl"]
+[[menu.items.prompts]]
+name = "url"
+label = "URL"
+
+[[menu.items]]
+key = "p"
+icon = "↑"
+label = "POST mit JSON"
+run = "curl -sS -X POST -H 'Content-Type: application/json' -d {daten} {url} | head -60"
+requires = ["curl"]
+[[menu.items.prompts]]
+name = "url"
+label = "URL"
+[[menu.items.prompts]]
+name = "daten"
+label = "JSON-Daten"
+default = "{{}}"
+
+[[menu.items]]
+key = "s"
+icon = "▶"
+label = "Diesen Ordner im Netz freigeben"
+desc = "Kleiner Webserver auf Port 8000, mit Strg-C beenden."
+run = "echo \"Erreichbar unter: http://$(hostname -I 2>/dev/null | awk '{print $1}'):8000\"; python3 -m http.server 8000"
+interactive = true
+requires = ["python3"]
+
+[[menu.items]]
+key = "r"
+icon = "⇅"
+label = "Ordner abgleichen (rsync)"
+desc = "Zeigt erst, was passieren wuerde."
+run = "rsync -avhn --delete {quelle} {ziel} | head -40; echo; echo '--- das war eine Vorschau, nichts wurde kopiert ---'"
+requires = ["rsync"]
+[[menu.items.prompts]]
+name = "quelle"
+label = "Quellordner (mit / am Ende)"
+[[menu.items.prompts]]
+name = "ziel"
+label = "Zielordner"
+
+[[menu.items]]
+key = "R"
+icon = "⇅"
+label = "Ordner wirklich abgleichen"
+run = "rsync -avh --delete {quelle} {ziel}"
+interactive = true
+confirm = "Dateien im Ziel, die in der Quelle fehlen, werden geloescht. Weiter?"
+requires = ["rsync"]
+[[menu.items.prompts]]
+name = "quelle"
+label = "Quellordner (mit / am Ende)"
+[[menu.items.prompts]]
+name = "ziel"
+label = "Zielordner"
+
+[[menu.items]]
+key = "t"
+icon = "◔"
+label = "Wie schnell ist die Leitung?"
+run = "curl -o /dev/null -w 'Download %{{speed_download}} Bytes/s in %{{time_total}}s\\n' --max-time 30 http://speedtest.tele2.net/10MB.zip"
+requires = ["curl"]
+
+[[menu.items]]
+key = "u"
+icon = "◆"
+label = "URL auf Erreichbarkeit pruefen"
+run = "curl -sS -o /dev/null -w 'Status %{{http_code}} nach %{{time_total}}s\\n' --max-time 15 {url}"
+requires = ["curl"]
+[[menu.items.prompts]]
+name = "url"
+label = "URL"
+
+# --------------------------------------------------------- Netzanalyse
+[[menu]]
+id = "analyse"
+title = "Netzwerk-Analyse"
+subtitle = "das eigene Netz verstehen"
+
+[[menu.items]]
+key = "i"
+icon = "⌖"
+label = "Mein Netz im Ueberblick"
+run = """
+echo '== meine Adressen =='; ip -brief address
+echo; echo '== Standard-Route =='; ip route | grep default
+echo; echo '== DNS =='; (resolvectl dns 2>/dev/null || grep nameserver /etc/resolv.conf)
+"""
+tags = ["lesen"]
+
+[[menu.items]]
+key = "n"
+icon = "◆"
+label = "Geraete im eigenen Netz"
+desc = "Fragt die Nachbarschaft ab, ohne zu scannen."
+run = "ip neigh show | grep -v FAILED; echo; echo '(Eintraege entstehen durch Verkehr -- erst pingen hilft.)'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "a"
+icon = "◆"
+label = "Eigenes Netz durchsuchen"
+desc = "arp-scan im lokalen Netz, zeigt Geraete und Hersteller."
+run = "sudo arp-scan --localnet 2>/dev/null | head -40 || echo 'arp-scan fehlt (sudo apt install arp-scan).'"
+interactive = true
+
+[[menu.items]]
+key = "s"
+icon = "◆"
+label = "Offene Ports eines Rechners"
+desc = "nmap gegen eine Adresse im eigenen Netz."
+run = "nmap -Pn --top-ports 100 {ziel}"
+interactive = true
+requires = ["nmap"]
+[[menu.items.prompts]]
+name = "ziel"
+label = "IP oder Hostname"
+
+[[menu.items]]
+key = "m"
+icon = "◆"
+label = "Mich selbst scannen"
+run = "nmap -Pn localhost"
+requires = ["nmap"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "t"
+icon = "≣"
+label = "Pakete mitschneiden"
+desc = "tcpdump auf einer Schnittstelle, mit Strg-C beenden."
+run = "sudo tcpdump -i {schnittstelle} -n -c 200"
+interactive = true
+[[menu.items.prompts]]
+name = "schnittstelle"
+label = "Schnittstelle"
+default = "any"
+
+[[menu.items]]
+key = "w"
+icon = "◆"
+label = "Wem gehoert diese Domain?"
+run = "whois {domain} | head -40"
+requires = ["whois"]
+[[menu.items.prompts]]
+name = "domain"
+label = "Domain"
+
+[[menu.items]]
+key = "d"
+icon = "⌖"
+label = "DNS-Eintraege einer Domain"
+run = "for t in A AAAA MX NS TXT; do echo \"== $t\"; dig +short $t {domain}; done"
+requires = ["dig"]
+[[menu.items.prompts]]
+name = "domain"
+label = "Domain"
+
+[[menu.items]]
+key = "c"
+icon = "⛨"
+label = "TLS-Zertifikat ansehen"
+run = "echo | openssl s_client -connect {host}:443 -servername {host} 2>/dev/null | openssl x509 -noout -subject -issuer -dates"
+requires = ["openssl"]
+[[menu.items.prompts]]
+name = "host"
+label = "Hostname"
+
+[[menu.items]]
+key = "r"
+icon = "→"
+label = "Weg zu einem Ziel"
+run = "mtr -r -c 5 {ziel} 2>/dev/null || traceroute -n {ziel}"
+interactive = true
+[[menu.items.prompts]]
+name = "ziel"
+label = "Host oder IP"
+
+[[menu.items]]
+key = "l"
+icon = "◔"
+label = "Wer verbraucht gerade Bandbreite?"
+run = "sudo iftop -t -s 10 2>/dev/null || sudo nethogs -t -c 10 2>/dev/null || echo 'iftop oder nethogs installieren.'"
+interactive = true
+
+# -------------------------------------------------------------- Python
+[[menu]]
+id = "python"
+title = "Python"
+
+[[menu.items]]
+key = "v"
+icon = "◆"
+label = "Version und Pfad"
+run = "python3 -V; command -v python3; echo; python3 -c 'import sys; print(sys.prefix)'"
+requires = ["python3"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "e"
+icon = "+"
+label = "venv anlegen"
+run = "python3 -m venv .venv && echo 'Fertig. Aktivieren mit: source .venv/bin/activate'"
+requires = ["python3"]
+
+[[menu.items]]
+key = "l"
+icon = "≣"
+label = "Installierte Pakete"
+run = "python3 -m pip list"
+requires = ["python3"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "o"
+icon = "↑"
+label = "Veraltete Pakete"
+run = "python3 -m pip list --outdated"
+requires = ["python3"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "i"
+icon = "+"
+label = "Paket installieren"
+run = "python3 -m pip install --user {paket}"
+interactive = true
+requires = ["python3"]
+[[menu.items.prompts]]
+name = "paket"
+label = "Paketname"
+quote = false
+
+[[menu.items]]
+key = "r"
+icon = "+"
+label = "requirements.txt installieren"
+run = "python3 -m pip install -r requirements.txt"
+interactive = true
+requires = ["python3"]
+
+[[menu.items]]
+key = "f"
+icon = "≣"
+label = "requirements.txt schreiben"
+run = "python3 -m pip freeze > requirements.txt && wc -l requirements.txt && head -20 requirements.txt"
+requires = ["python3"]
+
+[[menu.items]]
+key = "s"
+icon = "▶"
+label = "Python-Konsole"
+run = "python3"
+interactive = true
+requires = ["python3"]
+
+[[menu.items]]
+key = "x"
+icon = "▶"
+label = "Skript ausfuehren"
+run = "python3 {datei}"
+interactive = true
+requires = ["python3"]
+[[menu.items.prompts]]
+name = "datei"
+label = "Python-Datei"
+
+[[menu.items]]
+key = "j"
+icon = "◇"
+label = "JSON formatieren"
+run = "python3 -m json.tool {datei}"
+requires = ["python3"]
+[[menu.items.prompts]]
+name = "datei"
+label = "JSON-Datei"
+
+[[menu.items]]
+key = "c"
+icon = "◆"
+label = "Syntax aller Dateien pruefen"
+run = "find . -name '*.py' -not -path '*/.venv/*' -print0 | xargs -0 -r python3 -m py_compile && echo 'Alles sauber.'"
+requires = ["python3"]
+
+[[menu.items]]
+key = "F"
+icon = "◆"
+label = "Code formatieren und pruefen"
+run = "command -v ruff >/dev/null && { ruff format . ; ruff check . ; } || echo 'ruff fehlt: python3 -m pip install --user ruff'"
+
+# ----------------------------------------------------------------- Node
+[[menu]]
+id = "node"
+title = "Node und Web"
+
+[[menu.items]]
+key = "v"
+icon = "◆"
+label = "Versionen"
+run = "node -v; npm -v; command -v yarn pnpm 2>/dev/null"
+requires = ["node"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "s"
+icon = "≣"
+label = "Skripte im Projekt"
+run = "node -e 'const p=require(\"./package.json\");for(const [k,v] of Object.entries(p.scripts||{{}}))console.log(k.padEnd(16),v)'"
+requires = ["node"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "r"
+icon = "▶"
+label = "Skript starten"
+run = "npm run {skript}"
+interactive = true
+requires = ["npm"]
+[[menu.items.prompts]]
+name = "skript"
+label = "Skriptname"
+
+[[menu.items]]
+key = "i"
+icon = "+"
+label = "Abhaengigkeiten installieren"
+run = "npm install"
+interactive = true
+requires = ["npm"]
+
+[[menu.items]]
+key = "a"
+icon = "+"
+label = "Paket hinzufuegen"
+run = "npm install {paket}"
+interactive = true
+requires = ["npm"]
+[[menu.items.prompts]]
+name = "paket"
+label = "Paketname"
+quote = false
+
+[[menu.items]]
+key = "o"
+icon = "↑"
+label = "Veraltete Pakete"
+run = "npm outdated || true"
+requires = ["npm"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "u"
+icon = "⛨"
+label = "Sicherheitspruefung"
+run = "npm audit || true"
+requires = ["npm"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "c"
+icon = "✗"
+label = "node_modules wegwerfen und neu holen"
+run = "rm -rf node_modules package-lock.json && npm install"
+interactive = true
+confirm = "node_modules und package-lock.json loeschen und neu installieren?"
+requires = ["npm"]
+
+[[menu.items]]
+key = "w"
+icon = "▶"
+label = "Ordner als Webseite ausliefern"
+run = "npx --yes http-server -p 8080"
+interactive = true
+requires = ["npx"]
+
+[[menu.items]]
+key = "g"
+icon = "▣"
+label = "Global installierte Pakete"
+run = "npm list -g --depth=0"
+requires = ["npm"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "p"
+icon = "◆"
+label = "Paket im Netz nachschlagen"
+run = "npm view {paket} version description homepage"
+requires = ["npm"]
+[[menu.items.prompts]]
+name = "paket"
+label = "Paketname"
+
+# ----------------------------------------------------------- Datenbanken
+[[menu]]
+id = "db"
+title = "Datenbanken"
+
+[[menu.items]]
+heading = "SQLite"
+
+[[menu.items]]
+key = "t"
+icon = "▤"
+label = "Tabellen einer Datei"
+run = "sqlite3 {datei} '.tables'"
+requires = ["sqlite3"]
+[[menu.items.prompts]]
+name = "datei"
+label = "SQLite-Datei"
+
+[[menu.items]]
+key = "s"
+icon = "≣"
+label = "Aufbau der Datenbank"
+run = "sqlite3 {datei} '.schema'"
+requires = ["sqlite3"]
+[[menu.items.prompts]]
+name = "datei"
+label = "SQLite-Datei"
+
+[[menu.items]]
+key = "x"
+icon = "◆"
+label = "Abfrage ausfuehren"
+run = "sqlite3 -header -column {datei} {sql}"
+requires = ["sqlite3"]
+[[menu.items.prompts]]
+name = "datei"
+label = "SQLite-Datei"
+[[menu.items.prompts]]
+name = "sql"
+label = "SQL"
+default = "SELECT 1;"
+
+[[menu.items]]
+key = "o"
+icon = "▶"
+label = "SQLite-Konsole"
+run = "sqlite3 {datei}"
+interactive = true
+requires = ["sqlite3"]
+[[menu.items.prompts]]
+name = "datei"
+label = "SQLite-Datei"
+
+[[menu.items]]
+heading = "PostgreSQL und MySQL"
+
+[[menu.items]]
+key = "p"
+icon = "▶"
+label = "psql-Konsole"
+run = "psql {datenbank}"
+interactive = true
+requires = ["psql"]
+[[menu.items.prompts]]
+name = "datenbank"
+label = "Datenbankname"
+
+[[menu.items]]
+key = "l"
+icon = "≣"
+label = "Postgres-Datenbanken auflisten"
+run = "psql -l"
+requires = ["psql"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "m"
+icon = "▶"
+label = "MySQL-Konsole"
+run = "mysql -u {benutzer} -p"
+interactive = true
+requires = ["mysql"]
+[[menu.items.prompts]]
+name = "benutzer"
+label = "Benutzername"
+default = "root"
+
+[[menu.items]]
+key = "d"
+icon = "↓"
+label = "Postgres-Datenbank sichern"
+run = "pg_dump {datenbank} > {datenbank}.sql && ls -lh {datenbank}.sql"
+requires = ["pg_dump"]
+[[menu.items.prompts]]
+name = "datenbank"
+label = "Datenbankname"
+
+[[menu.items]]
+heading = "Redis"
+
+[[menu.items]]
+key = "r"
+icon = "▶"
+label = "Redis-Konsole"
+run = "redis-cli"
+interactive = true
+requires = ["redis-cli"]
+
+[[menu.items]]
+key = "i"
+icon = "◆"
+label = "Redis-Status"
+run = "redis-cli info server 2>/dev/null | head -20 && redis-cli dbsize"
+requires = ["redis-cli"]
+tags = ["lesen"]
+
+# ------------------------------------------------- Rechnen und Umwandeln
+[[menu]]
+id = "rechnen"
+title = "Rechnen und Umwandeln"
+
+[[menu.items]]
+key = "r"
+icon = "±"
+label = "Rechnen"
+run = "echo 'scale=6; {ausdruck}' | bc -l"
+requires = ["bc"]
+[[menu.items.prompts]]
+name = "ausdruck"
+label = "Rechnung, z. B. (17*3)/4"
+quote = false
+
+[[menu.items]]
+key = "t"
+icon = "▶"
+label = "Taschenrechner offen lassen"
+run = "bc -l"
+interactive = true
+requires = ["bc"]
+
+[[menu.items]]
+key = "z"
+icon = "±"
+label = "Zahlensysteme"
+desc = "Dezimal, Hexadezimal, Oktal, Binaer auf einen Blick."
+run = """
+n={zahl}
+printf 'dezimal      %d\\n' "$n"
+printf 'hexadezimal  %x\\n' "$n"
+printf 'oktal        %o\\n' "$n"
+printf 'binaer       '; echo "obase=2; $n" | bc
+"""
+requires = ["bc"]
+[[menu.items.prompts]]
+name = "zahl"
+label = "Dezimalzahl"
+quote = false
+
+[[menu.items]]
+key = "h"
+icon = "◆"
+label = "Pruefsummen einer Datei"
+run = "for a in md5sum sha1sum sha256sum; do printf '%-10s ' \"${{a%sum}}\"; $a {datei} | cut -d' ' -f1; done"
+[[menu.items.prompts]]
+name = "datei"
+label = "Datei"
+
+[[menu.items]]
+key = "b"
+icon = "◆"
+label = "Text nach base64"
+run = "printf '%s' {text} | base64"
+[[menu.items.prompts]]
+name = "text"
+label = "Text"
+
+[[menu.items]]
+key = "B"
+icon = "◆"
+label = "base64 zurueckwandeln"
+run = "printf '%s' {text} | base64 -d; echo"
+[[menu.items.prompts]]
+name = "text"
+label = "base64-Text"
+
+[[menu.items]]
+key = "u"
+icon = "◆"
+label = "URL kodieren"
+run = "python3 -c 'import sys,urllib.parse;print(urllib.parse.quote(sys.argv[1]))' {text}"
+requires = ["python3"]
+[[menu.items.prompts]]
+name = "text"
+label = "Text"
+
+[[menu.items]]
+key = "p"
+icon = "⛨"
+label = "Passwort erzeugen"
+run = "tr -dc 'A-Za-z0-9!@#%^&*_+-' < /dev/urandom | head -c {laenge}; echo"
+[[menu.items.prompts]]
+name = "laenge"
+label = "Laenge"
+default = "24"
+quote = false
+
+[[menu.items]]
+key = "w"
+icon = "⛨"
+label = "Merkbares Passwort"
+desc = "Vier zufaellige Woerter -- lang und trotzdem tippbar."
+run = "shuf -n 4 /usr/share/dict/words 2>/dev/null | tr '\\n' '-' | sed 's/-$//' || python3 -c \"import secrets,string;print('-'.join(''.join(secrets.choice(string.ascii_lowercase) for _ in range(5)) for _ in range(4)))\"; echo"
+
+[[menu.items]]
+key = "i"
+icon = "◆"
+label = "Zufaellige Kennung (UUID)"
+run = "cat /proc/sys/kernel/random/uuid"
+
+[[menu.items]]
+key = "d"
+icon = "◔"
+label = "Zeitstempel umrechnen"
+run = "echo 'jetzt als Unix-Zeit:'; date +%s; echo; echo 'deine Eingabe als Datum:'; date -d @{stempel} 2>/dev/null || echo 'keine gueltige Unix-Zeit'"
+[[menu.items.prompts]]
+name = "stempel"
+label = "Unix-Zeitstempel"
+default = "0"
+quote = false
+
+[[menu.items]]
+key = "e"
+icon = "◆"
+label = "Einheiten umrechnen"
+run = "units {von} {nach} 2>/dev/null || echo 'units fehlt (sudo apt install units).'"
+[[menu.items.prompts]]
+name = "von"
+label = "Von, z. B. '10 km'"
+[[menu.items.prompts]]
+name = "nach"
+label = "Nach, z. B. 'miles'"
+
+# ----------------------------------------------------------- Laufwerke
+[[menu]]
+id = "laufwerke"
+title = "Laufwerke"
+
+[[menu.items]]
+key = "l"
+icon = "▤"
+label = "Alle Laufwerke"
+run = "lsblk -o NAME,SIZE,FSTYPE,LABEL,MOUNTPOINT,MODEL"
+requires = ["lsblk"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "p"
+icon = "▤"
+label = "Freier Platz"
+run = "df -h -x tmpfs -x devtmpfs"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "u"
+icon = "◆"
+label = "Was frisst hier den Platz?"
+run = "du -h -d 1 . 2>/dev/null | sort -hr | head -25"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "e"
+icon = "↓"
+label = "Eingehaengt"
+run = "findmnt -t ext4,ext3,xfs,btrfs,vfat,exfat,ntfs,iso9660 2>/dev/null || mount | grep '^/dev'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "m"
+icon = "+"
+label = "Einhaengen"
+run = "sudo mkdir -p /mnt/{name} && sudo mount {geraet} /mnt/{name} && df -h /mnt/{name}"
+interactive = true
+[[menu.items.prompts]]
+name = "geraet"
+label = "Geraet, z. B. /dev/sdb1"
+[[menu.items.prompts]]
+name = "name"
+label = "Name unter /mnt/"
+quote = false
+
+[[menu.items]]
+key = "a"
+icon = "-"
+label = "Aushaengen"
+run = "sudo umount {pfad} && echo 'ausgehaengt'"
+interactive = true
+confirm = true
+[[menu.items.prompts]]
+name = "pfad"
+label = "Pfad oder Geraet"
+
+[[menu.items]]
+key = "U"
+icon = "◆"
+label = "USB-Sticks erkennen"
+run = "lsblk -o NAME,SIZE,TRAN,MOUNTPOINT,LABEL | grep -E 'usb|NAME' || echo 'Kein USB-Geraet gefunden.'"
+requires = ["lsblk"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "i"
+icon = "◆"
+label = "Abbild auf USB-Stick schreiben"
+desc = "Loescht den Stick vollstaendig. Geraet sehr genau pruefen."
+run = "sudo dd if={abbild} of={geraet} bs=4M status=progress conv=fsync"
+interactive = true
+confirm = "Der Zielstick wird vollstaendig ueberschrieben. Geraet richtig gewaehlt?"
+tags = ["gefaehrlich"]
+[[menu.items.prompts]]
+name = "abbild"
+label = "ISO- oder IMG-Datei"
+[[menu.items.prompts]]
+name = "geraet"
+label = "Zielgeraet, z. B. /dev/sdb"
+
+[[menu.items]]
+key = "f"
+icon = "◆"
+label = "Dateisystem pruefen"
+run = "sudo fsck -n {geraet}"
+interactive = true
+[[menu.items.prompts]]
+name = "geraet"
+label = "Geraet, z. B. /dev/sdb1"
+
+[[menu.items]]
+key = "s"
+icon = "◔"
+label = "Zustand der Platte (SMART)"
+run = "sudo smartctl -H -A {geraet} 2>/dev/null | head -30 || echo 'smartmontools installieren.'"
+interactive = true
+[[menu.items.prompts]]
+name = "geraet"
+label = "Geraet"
+default = "/dev/sda"
+
+[[menu.items]]
+key = "t"
+icon = "≣"
+label = "fstab ansehen"
+run = "cat /etc/fstab"
+tags = ["lesen"]
+
+# --------------------------------------------------------------- Sichern
+[[menu]]
+id = "backup"
+title = "Sichern"
+
+[[menu.items]]
+key = "o"
+icon = "⧉"
+label = "Ordner sichern"
+desc = "Packt einen Ordner mit Datum im Namen."
+run = "tar czf {name}_$(date +%Y%m%d_%H%M).tar.gz {ordner} && ls -lh {name}_*.tar.gz | tail -3"
+[[menu.items.prompts]]
+name = "ordner"
+label = "Zu sichernder Ordner"
+[[menu.items.prompts]]
+name = "name"
+label = "Name der Sicherung"
+quote = false
+
+[[menu.items]]
+key = "h"
+icon = "⧉"
+label = "Wichtige Einstellungen sichern"
+desc = "Alle Punkt-Dateien aus dem Home-Verzeichnis."
+run = "tar czf dotfiles_$(date +%Y%m%d).tar.gz -C ~ $(cd ~ && ls -d .[!.]* 2>/dev/null | grep -vE '^(\\.cache|\\.local|\\.mozilla|\\.npm)$' | tr '\\n' ' ') 2>/dev/null && ls -lh dotfiles_*.tar.gz | tail -1"
+
+[[menu.items]]
+key = "k"
+icon = "⇅"
+label = "Ordner kopieren (Vorschau)"
+run = "rsync -avhn {quelle} {ziel} | head -40"
+requires = ["rsync"]
+[[menu.items.prompts]]
+name = "quelle"
+label = "Quelle (mit / am Ende)"
+[[menu.items.prompts]]
+name = "ziel"
+label = "Ziel"
+
+[[menu.items]]
+key = "K"
+icon = "⇅"
+label = "Ordner wirklich kopieren"
+run = "rsync -avh --progress {quelle} {ziel}"
+interactive = true
+requires = ["rsync"]
+[[menu.items.prompts]]
+name = "quelle"
+label = "Quelle (mit / am Ende)"
+[[menu.items.prompts]]
+name = "ziel"
+label = "Ziel"
+
+[[menu.items]]
+key = "d"
+icon = "◆"
+label = "Doppelte Dateien finden"
+desc = "Vergleicht Pruefsummen, zeigt nur echte Dubletten."
+run = "find . -type f -size +1k -not -path '*/.git/*' -exec sha256sum {{}} + 2>/dev/null | sort | uniq -w64 -dD | head -40 || echo 'keine Dubletten'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "v"
+icon = "◆"
+label = "Sicherung pruefen"
+run = "tar tzf {datei} >/dev/null && echo 'Archiv ist lesbar und vollstaendig.' || echo 'Archiv ist beschaedigt.'"
+[[menu.items.prompts]]
+name = "datei"
+label = "tar.gz-Datei"
+
+[[menu.items]]
+key = "l"
+icon = "≣"
+label = "Sicherungen hier auflisten"
+run = "ls -lht *.tar.gz *.zip 2>/dev/null | head -20 || echo 'Keine Archive in diesem Ordner.'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "g"
+icon = "⧉"
+label = "Alle Git-Projekte sichern"
+desc = "Sucht Repositories und packt sie einzeln."
+run = """
+n=0
+for d in $(find ~ -maxdepth 4 -name .git -type d 2>/dev/null | head -20); do
+  r=$(dirname "$d"); b=$(basename "$r")
+  tar czf "$b"_$(date +%Y%m%d).tar.gz -C "$(dirname "$r")" "$b" && n=$((n+1))
+done
+echo "$n Projekte gesichert."; ls -lh *_$(date +%Y%m%d).tar.gz 2>/dev/null | head
+"""
+
+[[menu.items]]
+key = "s"
+icon = "◆"
+label = "Was wurde heute geaendert?"
+desc = "Guter Blick vor einer Sicherung."
+run = "find . -type f -mtime -1 -not -path '*/.git/*' -printf '%TH:%TM  %p\\n' 2>/dev/null | sort -r | head -40"
+tags = ["lesen"]
+
+# ------------------------------------------------------------------ Logs
+[[menu]]
+id = "logs"
+title = "Logs und Beobachten"
+
+[[menu.items]]
+key = "j"
+icon = "≣"
+label = "Journal mitlesen"
+run = "journalctl -f -n 100"
+interactive = true
+requires = ["journalctl"]
+
+[[menu.items]]
+key = "f"
+icon = "✗"
+label = "Nur Fehler aus dem Journal"
+run = "journalctl -p err -n 60 --no-pager"
+requires = ["journalctl"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "b"
+icon = "◔"
+label = "Journal seit dem Start"
+run = "journalctl -b -n 100 --no-pager"
+requires = ["journalctl"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "s"
+icon = "◆"
+label = "Journal durchsuchen"
+run = "journalctl -g {muster} -n 60 --no-pager"
+requires = ["journalctl"]
+[[menu.items.prompts]]
+name = "muster"
+label = "Suchmuster"
+
+[[menu.items]]
+key = "k"
+icon = "≣"
+label = "Kernel-Meldungen"
+run = "dmesg --color=always -T 2>/dev/null | tail -60 || sudo dmesg -T | tail -60"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "d"
+icon = "▤"
+label = "Groesse der Logs"
+run = "journalctl --disk-usage 2>/dev/null; echo; sudo du -sh /var/log 2>/dev/null; echo; ls -lhS /var/log/*.log 2>/dev/null | head -10"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "c"
+icon = "✗"
+label = "Journal aufraeumen"
+run = "sudo journalctl --vacuum-time=7d"
+interactive = true
+confirm = "Journal-Eintraege aelter als 7 Tage loeschen?"
+requires = ["journalctl"]
+
+[[menu.items]]
+key = "t"
+icon = "≣"
+label = "Datei mitlesen"
+run = "tail -f {datei}"
+interactive = true
+[[menu.items.prompts]]
+name = "datei"
+label = "Logdatei"
+default = "/var/log/syslog"
+
+[[menu.items]]
+key = "w"
+icon = "⟳"
+label = "Befehl wiederholt ausfuehren"
+desc = "Alle zwei Sekunden neu, mit Strg-C beenden."
+run = "watch -n 2 -d {befehl}"
+interactive = true
+requires = ["watch"]
+[[menu.items.prompts]]
+name = "befehl"
+label = "Befehl"
+default = "df -h"
+quote = false
+
+[[menu.items]]
+key = "r"
+icon = "◔"
+label = "Alles auf einen Blick"
+run = "command -v btop >/dev/null && exec btop || { command -v htop >/dev/null && exec htop || exec top; }"
+interactive = true
+
+[[menu.items]]
+key = "i"
+icon = "▤"
+label = "Plattenzugriffe beobachten"
+run = "sudo iotop -o 2>/dev/null || echo 'iotop installieren (sudo apt install iotop).'"
+interactive = true
+
+# ------------------------------------------------------------------ Zeit
+[[menu]]
+id = "zeit"
+title = "Zeit"
+
+[[menu.items]]
+key = "j"
+icon = "◔"
+label = "Jetzt"
+run = """
+date '+%A, %d. %B %Y'
+date '+%H:%M:%S  (%Z, UTC%:z)'
+printf 'Unix-Zeit    %s\\n' "$(date +%s)"
+printf 'Kalenderwoche %s\\n' "$(date +%V)"
+printf 'Tag im Jahr  %s\\n' "$(date +%j)"
+"""
+tags = ["lesen"]
+
+[[menu.items]]
+key = "k"
+icon = "▤"
+label = "Kalender"
+run = "cal -3 2>/dev/null || cal"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "J"
+icon = "▤"
+label = "Ganzes Jahr"
+run = "cal -y"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "z"
+icon = "◆"
+label = "Zeit in anderen Zeitzonen"
+run = """
+for tz in UTC America/New_York America/Los_Angeles Europe/London Asia/Tokyo Australia/Sydney; do
+  printf '%-22s %s\\n' "$tz" "$(TZ=$tz date '+%a %H:%M')"
+done
+"""
+tags = ["lesen"]
+
+[[menu.items]]
+key = "s"
+icon = "◉"
+label = "Zeiteinstellung des Systems"
+run = "timedatectl status 2>/dev/null || date"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "u"
+icon = "◔"
+label = "Wie lange laeuft der Rechner?"
+run = "uptime -p 2>/dev/null; uptime; echo; who -b 2>/dev/null"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "t"
+icon = "◔"
+label = "Stoppuhr"
+desc = "Laeuft bis Strg-C."
+run = """
+start=$(date +%s)
+printf 'Laeuft. Strg-C beendet.\\n\\n'
+while true; do
+  d=$(( $(date +%s) - start ))
+  printf '\\r  %02d:%02d:%02d' $((d/3600)) $(((d%3600)/60)) $((d%60))
+  sleep 1
+done
+"""
+interactive = true
+
+[[menu.items]]
+key = "w"
+icon = "◔"
+label = "Wecker in X Minuten"
+run = """
+m={minuten}
+echo "Warte $m Minuten ..."
+sleep $((m*60))
+echo; echo '*** ZEIT UM ***'
+command -v notify-send >/dev/null && notify-send 'CI' 'Zeit um!'
+printf '\\a'
+"""
+interactive = true
+[[menu.items.prompts]]
+name = "minuten"
+label = "Minuten"
+default = "5"
+quote = false
+
+[[menu.items]]
+key = "c"
+icon = "≣"
+label = "Geplante Aufgaben"
+run = "echo '== deine Cron-Eintraege =='; crontab -l 2>/dev/null || echo keine; echo; echo '== Timer =='; systemctl list-timers --no-pager 2>/dev/null | head -20"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "e"
+icon = "✎"
+label = "Cron bearbeiten"
+run = "crontab -e"
+interactive = true
+requires = ["crontab"]
+
+[[menu.items]]
+key = "d"
+icon = "±"
+label = "Tage zwischen zwei Daten"
+run = """
+a=$(date -d {von} +%s 2>/dev/null) || {{ echo 'Erstes Datum nicht lesbar.'; exit 1; }}
+b=$(date -d {bis} +%s 2>/dev/null) || {{ echo 'Zweites Datum nicht lesbar.'; exit 1; }}
+echo "$(( (b - a) / 86400 )) Tage"
+"""
+[[menu.items.prompts]]
+name = "von"
+label = "Von (JJJJ-MM-TT)"
+[[menu.items.prompts]]
+name = "bis"
+label = "Bis (JJJJ-MM-TT)"
+
+# ------------------------------------------------------------- Oberflaeche
+[[menu]]
+id = "desktop"
+title = "Oberflaeche"
+
+[[menu.items]]
+key = "b"
+icon = "▢"
+label = "Bildschirme"
+run = "xrandr --query 2>/dev/null | grep -E ' connected|^Screen' || echo 'Kein X11 (vielleicht Wayland).'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "a"
+icon = "▢"
+label = "Aufloesungen anzeigen"
+run = "xrandr 2>/dev/null | head -40 || echo 'Kein X11.'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "t"
+icon = "⌨"
+label = "Tastaturlayout"
+run = "setxkbmap -query 2>/dev/null || localectl status 2>/dev/null || echo 'Nicht ermittelbar.'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "d"
+icon = "⌨"
+label = "Layout auf Deutsch stellen"
+run = "setxkbmap de && echo 'Tastatur steht auf Deutsch.'"
+requires = ["setxkbmap"]
+
+[[menu.items]]
+key = "e"
+icon = "⌨"
+label = "Layout auf Englisch stellen"
+run = "setxkbmap us && echo 'Tastatur steht auf Englisch (US).'"
+requires = ["setxkbmap"]
+
+[[menu.items]]
+key = "c"
+icon = "⧉"
+label = "Zwischenablage anzeigen"
+run = "xclip -o -selection clipboard 2>/dev/null || wl-paste 2>/dev/null || echo 'xclip oder wl-clipboard installieren.'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "k"
+icon = "⧉"
+label = "Text in die Zwischenablage"
+run = "printf '%s' {text} | (xclip -selection clipboard 2>/dev/null || wl-copy 2>/dev/null) && echo 'kopiert'"
+[[menu.items.prompts]]
+name = "text"
+label = "Text"
+
+[[menu.items]]
+key = "f"
+icon = "⧉"
+label = "Datei in die Zwischenablage"
+run = "(xclip -selection clipboard < {datei} 2>/dev/null || wl-copy < {datei} 2>/dev/null) && echo 'Inhalt kopiert'"
+[[menu.items.prompts]]
+name = "datei"
+label = "Datei"
+
+[[menu.items]]
+key = "s"
+icon = "▢"
+label = "Screenshot"
+run = "f=screenshot_$(date +%H%M%S).png; (scrot \"$f\" 2>/dev/null || maim \"$f\" 2>/dev/null || gnome-screenshot -f \"$f\" 2>/dev/null) && ls -lh \"$f\" || echo 'Kein Screenshot-Programm gefunden.'"
+
+[[menu.items]]
+key = "w"
+icon = "▢"
+label = "Offene Fenster"
+run = "wmctrl -l 2>/dev/null || xdotool search --name '' getwindowname %@ 2>/dev/null | head -30 || echo 'wmctrl installieren.'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "o"
+icon = "◆"
+label = "Welche Oberflaeche laeuft hier?"
+run = """
+printf '%-18s %s\\n' 'Desktop'  "${{XDG_CURRENT_DESKTOP:-unbekannt}}"
+printf '%-18s %s\\n' 'Sitzung'  "${{XDG_SESSION_TYPE:-unbekannt}}"
+printf '%-18s %s\\n' 'Anzeige'  "${{DISPLAY:-keine}}"
+printf '%-18s %s\\n' 'Terminal' "${{TERM:-unbekannt}}"
+printf '%-18s %s\\n' 'Fenster'  "$(wmctrl -m 2>/dev/null | head -1 | cut -d' ' -f2- || echo unbekannt)"
+"""
+tags = ["lesen"]
+
 '''
 
 
@@ -2467,6 +4273,7 @@ requires = ["convert"]
 class Config:
     theme: str = "nord"
     opaque: bool = False
+    shell_aliases: bool = False
     glyphs: str = "auto"
     clock: bool = True
     detail: bool = True
@@ -2512,6 +4319,7 @@ def parse_config(text: str, path: Path | None = None) -> Config:
     ui = data.get("ui") or {}
     cfg.theme = str(ui.get("theme", "nord"))
     cfg.opaque = bool(ui.get("opaque", False))
+    cfg.shell_aliases = bool(ui.get("shell_aliases", False))
     cfg.glyphs = str(ui.get("glyphs", "auto"))
     cfg.clock = bool(ui.get("clock", True))
     cfg.detail = bool(ui.get("detail", True))
@@ -2868,6 +4676,13 @@ def wrap_runs(runs: list[tuple[str, Style]], width: int
 MAX_LINES = 20000
 
 
+def shell_args(cmd: str, aliases: bool = False) -> list[str]:
+    """Aufrufzeile der Shell. Mit -i gelten die eigenen Aliase aus der
+    rc-Datei; ohne -i startet die Shell sauber und schneller."""
+    sh = pick_shell()
+    return [sh, "-ic", cmd] if aliases else [sh, "-c", cmd]
+
+
 def pick_shell() -> str:
     sh = os.environ.get("SHELL") or ""
     base = os.path.basename(sh)
@@ -2880,9 +4695,11 @@ def pick_shell() -> str:
 
 
 class Job:
-    def __init__(self, cmd: str, cwd: str, title: str = ""):
+    def __init__(self, cmd: str, cwd: str, title: str = "",
+                 aliases: bool = False):
         self.cmd = cmd
         self.cwd = cwd
+        self.aliases = aliases
         self.title = title or cmd
         self.lines: list[list[tuple[str, Style]]] = []
         self.plain: list[str] = []
@@ -2912,7 +4729,7 @@ class Job:
         self.running = True
         try:
             self.proc = subprocess.Popen(
-                [pick_shell(), "-c", self.cmd],
+                shell_args(self.cmd, self.aliases),
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
                 stdin=subprocess.DEVNULL, cwd=self.cwd, env=env,
                 text=True, errors="replace", bufsize=1,
@@ -4101,7 +5918,7 @@ class App:
                 if job.running:
                     job.signal(signal.SIGTERM)
                     time.sleep(0.1)
-                fresh = Job(job.cmd, job.cwd, job.title)
+                fresh = Job(job.cmd, job.cwd, job.title, job.aliases)
                 fresh.start()
                 job = fresh
                 top, follow = 0, True
@@ -4387,7 +6204,8 @@ class App:
             sys.stdout.flush()
             env = dict(os.environ)
             env["CI_SHELL"] = "1"
-            rc = subprocess.call([pick_shell(), "-c", cmd], cwd=cwd, env=env)
+            rc = subprocess.call(shell_args(cmd, self.cfg.shell_aliases),
+                                 cwd=cwd, env=env)
         except KeyboardInterrupt:
             rc = 130
         except Exception as exc:
@@ -4449,7 +6267,8 @@ class App:
             rc = self.run_interactive(cmd, cwd)
             ms = (time.time() - t0) * 1000.0
         else:
-            job = Job(cmd, cwd, title=item.label or cmd)
+            job = Job(cmd, cwd, title=item.label or cmd,
+                      aliases=self.cfg.shell_aliases)
             job.start()
             self.last_job = job
             self.pager(job)
@@ -4517,7 +6336,8 @@ class App:
                 return
             cmd = res["cmd"]
             tmp = Item(label=cmd, run=cmd, menu_id="@shell", key="")
-            job = Job(cmd, os.getcwd(), title=cmd)
+            job = Job(cmd, os.getcwd(), title=cmd,
+                      aliases=self.cfg.shell_aliases)
             job.start()
             self.last_job = job
             self.pager(job)
@@ -4836,6 +6656,8 @@ def main(argv: list[str]) -> int:
         print("  --theme NAME      %s" % " | ".join(THEME_ORDER))
         print("  --config PFAD     andere menu.toml benutzen")
         print("  --no-detail       rechtes Panel ausschalten")
+        print("  --aliases         eigene Aliase aus ~/.zshrc mitladen")
+        print("  --no-aliases      ohne eigene Aliase (Vorgabe, schneller)")
         print("  --opaque          eigener Hintergrund (bei transparentem Terminal)")
         print("  --transparent     Terminal-Hintergrund durchlassen")
         print("  --dump-config     eingebaute Standard-Konfiguration ausgeben")
@@ -4862,6 +6684,10 @@ def main(argv: list[str]) -> int:
         cfg.glyphs = "unicode"
     if "--no-detail" in args:
         cfg.detail = False
+    if "--aliases" in args:
+        cfg.shell_aliases = True
+    if "--no-aliases" in args:
+        cfg.shell_aliases = False
     if "--opaque" in args:
         cfg.opaque = True
     if "--transparent" in args:
