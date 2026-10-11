@@ -627,6 +627,66 @@ desc = "Laufende Prozesse ansehen, sortieren, beenden."
 goto = "proc"
 
 [[menu.items]]
+key = "k"
+icon = "❖"
+label = "Pakete"
+desc = "Suchen, installieren, aktualisieren, aufraeumen (apt)."
+goto = "pakete"
+requires = ["apt"]
+
+[[menu.items]]
+key = "v"
+icon = "◉"
+label = "Dienste"
+desc = "systemd: starten, stoppen, Status, Journal, Bootzeit."
+goto = "dienste"
+requires = ["systemctl"]
+
+[[menu.items]]
+key = "s"
+icon = "⟶"
+label = "SSH und Fernzugriff"
+desc = "Verbinden, Schluessel verwalten, Dateien uebertragen."
+goto = "ssh"
+requires = ["ssh"]
+
+[[menu.items]]
+key = "i"
+icon = "≋"
+label = "WLAN und Verbindungen"
+desc = "Netze suchen, verbinden, Geraete und DNS pruefen."
+goto = "wlan"
+requires = ["nmcli"]
+
+[[menu.items]]
+key = "b"
+icon = "☸"
+label = "Hardware"
+desc = "Platten, USB, PCI, CPU, Temperatur, Akku."
+goto = "hardware"
+
+[[menu.items]]
+key = "t"
+icon = "≡"
+label = "Text und Daten"
+desc = "Suchen, ersetzen, zaehlen, sortieren, JSON, CSV, vergleichen."
+goto = "text"
+
+[[menu.items]]
+key = "z"
+icon = "⧉"
+label = "Archive"
+desc = "Packen, entpacken, hineinschauen."
+goto = "archive"
+
+[[menu.items]]
+key = "m"
+icon = "▷"
+label = "Medien"
+desc = "Video, Audio und Bilder umwandeln und zuschneiden."
+goto = "medien"
+
+[[menu.items]]
 heading = "Schnellzugriff"
 
 [[menu.items]]
@@ -907,7 +967,7 @@ tags = ["gefaehrlich"]
 key = "d"
 icon = "±"
 label = "Diff gegen Upstream"
-run = "git --no-pager diff --color=always @{u}...HEAD --stat"
+run = "git --no-pager diff --color=always @{{u}}...HEAD --stat"
 tags = ["lesen"]
 
 # -------------------------------------------------------------- Git / Stash
@@ -1370,7 +1430,7 @@ icon = "◆"
 label = "HTTP-Check"
 desc = "Status, Zeiten und Header einer URL."
 run = """
-curl -sS -o /dev/null -w 'Status   %{http_code}\\nDNS      %{time_namelookup}s\\nConnect  %{time_connect}s\\nTLS      %{time_appconnect}s\\nTotal    %{time_total}s\\nGroesse  %{size_download} B\\n' {url}
+curl -sS -o /dev/null -w 'Status   %{{http_code}}\\nDNS      %{{time_namelookup}}s\\nConnect  %{{time_connect}}s\\nTLS      %{{time_appconnect}}s\\nTotal    %{{time_total}}s\\nGroesse  %{{size_download}} B\\n' {url}
 echo; echo '== Header =='; curl -sSI --max-time 10 {url}
 """
 requires = ["curl"]
@@ -1532,6 +1592,870 @@ run = "ls -l /proc/{pid}/fd 2>/dev/null | head -40 || lsof -p {pid}"
 name = "pid"
 label = "PID"
 quote = false
+# ------------------------------------------------------------------- Pakete
+[[menu]]
+id = "pakete"
+title = "Pakete"
+subtitle = "apt -- Installieren braucht dein Passwort"
+
+[[menu.items]]
+heading = "Suchen und ansehen"
+
+[[menu.items]]
+key = "s"
+icon = "◆"
+label = "Paket suchen"
+run = "apt-cache search {begriff} | head -40"
+requires = ["apt-cache"]
+[[menu.items.prompts]]
+name = "begriff"
+label = "Suchbegriff"
+
+[[menu.items]]
+key = "n"
+icon = "≣"
+label = "Paket-Info"
+run = "apt-cache show {paket} | head -30"
+requires = ["apt-cache"]
+[[menu.items.prompts]]
+name = "paket"
+label = "Paketname"
+
+[[menu.items]]
+key = "l"
+icon = "≣"
+label = "Installierte Pakete"
+run = "dpkg-query -W -f='${{Package}}\t${{Version}}\n' | sort | head -80"
+requires = ["dpkg-query"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "c"
+icon = "◆"
+label = "Anzahl installierter Pakete"
+run = "dpkg-query -f '.\n' -W | wc -l"
+requires = ["dpkg-query"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "w"
+icon = "◆"
+label = "Welches Paket liefert diese Datei?"
+run = "dpkg -S {datei}"
+requires = ["dpkg"]
+[[menu.items.prompts]]
+name = "datei"
+label = "Pfad oder Dateiname"
+
+[[menu.items]]
+key = "f"
+icon = "≣"
+label = "Dateien eines Pakets"
+run = "dpkg -L {paket} | head -60"
+requires = ["dpkg"]
+[[menu.items.prompts]]
+name = "paket"
+label = "Paketname"
+
+[[menu.items]]
+key = "H"
+icon = "◔"
+label = "Zuletzt installiert"
+run = "grep -a '^Commandline' /var/log/apt/history.log 2>/dev/null | tail -20 || echo 'Keine apt-Historie lesbar.'"
+tags = ["lesen"]
+
+[[menu.items]]
+heading = "Aendern -- fragt nach dem Passwort"
+
+[[menu.items]]
+key = "u"
+icon = "⟳"
+label = "Paketlisten aktualisieren"
+run = "sudo apt update"
+interactive = true
+requires = ["apt"]
+
+[[menu.items]]
+key = "U"
+icon = "↑"
+label = "System aktualisieren"
+desc = "apt update und danach apt upgrade."
+run = "sudo apt update && sudo apt upgrade"
+interactive = true
+requires = ["apt"]
+
+[[menu.items]]
+key = "I"
+icon = "+"
+label = "Paket installieren"
+run = "sudo apt install {paket}"
+interactive = true
+requires = ["apt"]
+[[menu.items.prompts]]
+name = "paket"
+label = "Paketname (mehrere mit Leerzeichen)"
+quote = false
+
+[[menu.items]]
+key = "R"
+icon = "✗"
+label = "Paket entfernen"
+run = "sudo apt remove {paket}"
+interactive = true
+confirm = "Paket wirklich entfernen?"
+requires = ["apt"]
+[[menu.items.prompts]]
+name = "paket"
+label = "Paketname"
+quote = false
+
+[[menu.items]]
+key = "A"
+icon = "✗"
+label = "Aufraeumen"
+desc = "Nicht mehr benoetigte Pakete und Paket-Cache entfernen."
+run = "sudo apt autoremove && sudo apt clean && df -h / | tail -1"
+interactive = true
+confirm = true
+requires = ["apt"]
+
+# ------------------------------------------------------------------ Dienste
+[[menu]]
+id = "dienste"
+title = "Dienste"
+subtitle = "systemd"
+
+[[menu.items]]
+key = "l"
+icon = "●"
+label = "Laufende Dienste"
+run = "systemctl list-units --type=service --state=running --no-pager"
+requires = ["systemctl"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "f"
+icon = "✗"
+label = "Fehlgeschlagene Dienste"
+run = "systemctl --failed --no-pager"
+requires = ["systemctl"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "a"
+icon = "≣"
+label = "Beim Start aktivierte Dienste"
+run = "systemctl list-unit-files --state=enabled --no-pager | head -40"
+requires = ["systemctl"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "s"
+icon = "◆"
+label = "Status eines Dienstes"
+run = "systemctl status {dienst} --no-pager -l | head -40"
+requires = ["systemctl"]
+[[menu.items.prompts]]
+name = "dienst"
+label = "Name des Dienstes"
+
+[[menu.items]]
+key = "j"
+icon = "≣"
+label = "Journal eines Dienstes"
+run = "journalctl -u {dienst} -n 200 -f"
+interactive = true
+requires = ["journalctl"]
+[[menu.items.prompts]]
+name = "dienst"
+label = "Name des Dienstes"
+
+[[menu.items]]
+key = "t"
+icon = "◔"
+label = "Was bremst den Systemstart?"
+run = "systemd-analyze && echo && systemd-analyze blame | head -20"
+requires = ["systemd-analyze"]
+tags = ["lesen"]
+
+[[menu.items]]
+heading = "Steuern -- fragt nach dem Passwort"
+
+[[menu.items]]
+key = "S"
+icon = "▶"
+label = "Dienst starten"
+run = "sudo systemctl start {dienst} && systemctl status {dienst} --no-pager | head -10"
+interactive = true
+requires = ["systemctl"]
+[[menu.items.prompts]]
+name = "dienst"
+label = "Name des Dienstes"
+
+[[menu.items]]
+key = "T"
+icon = "■"
+label = "Dienst stoppen"
+run = "sudo systemctl stop {dienst}"
+interactive = true
+confirm = true
+requires = ["systemctl"]
+[[menu.items.prompts]]
+name = "dienst"
+label = "Name des Dienstes"
+
+[[menu.items]]
+key = "R"
+icon = "⟳"
+label = "Dienst neu starten"
+run = "sudo systemctl restart {dienst} && systemctl status {dienst} --no-pager | head -10"
+interactive = true
+confirm = true
+requires = ["systemctl"]
+[[menu.items.prompts]]
+name = "dienst"
+label = "Name des Dienstes"
+
+[[menu.items]]
+key = "E"
+icon = "+"
+label = "Dienst beim Start aktivieren"
+run = "sudo systemctl enable {dienst}"
+interactive = true
+requires = ["systemctl"]
+[[menu.items.prompts]]
+name = "dienst"
+label = "Name des Dienstes"
+
+[[menu.items]]
+key = "D"
+icon = "-"
+label = "Dienst beim Start abschalten"
+run = "sudo systemctl disable {dienst}"
+interactive = true
+confirm = true
+requires = ["systemctl"]
+[[menu.items.prompts]]
+name = "dienst"
+label = "Name des Dienstes"
+
+# ---------------------------------------------------------------------- SSH
+[[menu]]
+id = "ssh"
+title = "SSH"
+subtitle = "Fernzugriff und Schluessel"
+
+[[menu.items]]
+key = "c"
+icon = "⟶"
+label = "Verbinden"
+run = "ssh {ziel}"
+interactive = true
+requires = ["ssh"]
+[[menu.items.prompts]]
+name = "ziel"
+label = "benutzer@host"
+
+[[menu.items]]
+key = "l"
+icon = "≣"
+label = "Bekannte Ziele"
+desc = "Alles, was in ~/.ssh/config steht."
+run = "grep -iE '^host ' ~/.ssh/config 2>/dev/null | sed 's/^[Hh]ost //' || echo 'Keine ~/.ssh/config vorhanden.'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "t"
+icon = "◆"
+label = "Verbindung testen"
+run = "ssh -o ConnectTimeout=6 -o BatchMode=yes {ziel} true && echo 'Verbindung steht.' || echo 'Keine Verbindung (oder Passwort noetig).'"
+requires = ["ssh"]
+[[menu.items.prompts]]
+name = "ziel"
+label = "benutzer@host"
+
+[[menu.items]]
+key = "k"
+icon = "◆"
+label = "Meine Schluessel"
+run = "ls -l ~/.ssh/*.pub 2>/dev/null; echo; echo '== im Agenten =='; ssh-add -l 2>&1"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "n"
+icon = "+"
+label = "Neuen Schluessel erzeugen"
+desc = "ed25519, der heute uebliche Typ."
+run = "ssh-keygen -t ed25519 -C {kommentar}"
+interactive = true
+requires = ["ssh-keygen"]
+[[menu.items.prompts]]
+name = "kommentar"
+label = "Kommentar (z. B. deine Mailadresse)"
+
+[[menu.items]]
+key = "C"
+icon = "↑"
+label = "Schluessel auf Server kopieren"
+run = "ssh-copy-id {ziel}"
+interactive = true
+requires = ["ssh-copy-id"]
+[[menu.items.prompts]]
+name = "ziel"
+label = "benutzer@host"
+
+[[menu.items]]
+key = "p"
+icon = "↑"
+label = "Datei hochladen"
+run = "scp {datei} {ziel}"
+interactive = true
+requires = ["scp"]
+[[menu.items.prompts]]
+name = "datei"
+label = "lokale Datei"
+[[menu.items.prompts]]
+name = "ziel"
+label = "benutzer@host:/pfad/"
+
+[[menu.items]]
+key = "d"
+icon = "↓"
+label = "Datei holen"
+run = "scp {quelle} ."
+interactive = true
+requires = ["scp"]
+[[menu.items.prompts]]
+name = "quelle"
+label = "benutzer@host:/pfad/datei"
+
+[[menu.items]]
+key = "a"
+icon = "◉"
+label = "Schluessel in den Agenten laden"
+run = "ssh-add"
+interactive = true
+requires = ["ssh-add"]
+
+# --------------------------------------------------------------------- WLAN
+[[menu]]
+id = "wlan"
+title = "WLAN"
+subtitle = "NetworkManager"
+
+[[menu.items]]
+key = "s"
+icon = "≋"
+label = "Netze in der Umgebung"
+run = "nmcli -f SSID,SIGNAL,SECURITY,CHAN device wifi list"
+requires = ["nmcli"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "c"
+icon = "⟶"
+label = "Mit Netz verbinden"
+run = "nmcli --ask device wifi connect {ssid}"
+interactive = true
+requires = ["nmcli"]
+[[menu.items.prompts]]
+name = "ssid"
+label = "Netzname (SSID)"
+
+[[menu.items]]
+key = "a"
+icon = "◉"
+label = "Aktive Verbindungen"
+run = "nmcli connection show --active"
+requires = ["nmcli"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "g"
+icon = "≣"
+label = "Gespeicherte Verbindungen"
+run = "nmcli connection show"
+requires = ["nmcli"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "d"
+icon = "◆"
+label = "Netzwerk-Geraete"
+run = "nmcli device status"
+requires = ["nmcli"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "r"
+icon = "⟳"
+label = "WLAN aus und wieder an"
+run = "nmcli radio wifi off && sleep 2 && nmcli radio wifi on && sleep 2 && nmcli radio"
+requires = ["nmcli"]
+
+[[menu.items]]
+key = "x"
+icon = "-"
+label = "Verbindung trennen"
+run = "nmcli connection down {name}"
+requires = ["nmcli"]
+confirm = true
+[[menu.items.prompts]]
+name = "name"
+label = "Name der Verbindung"
+
+[[menu.items]]
+key = "i"
+icon = "◆"
+label = "Geht das Internet?"
+desc = "Gateway, DNS und eine echte HTTPS-Anfrage."
+run = """
+gw=$(ip route | awk '/default/{print $3; exit}')
+printf '%-10s %s\n' 'Gateway' "${gw:-keins}"
+[ -n "$gw" ] && (ping -c 2 -W 2 "$gw" >/dev/null && echo '           erreichbar' || echo '           keine Antwort')
+echo
+echo '== DNS =='; getent hosts example.org || echo 'DNS antwortet nicht'
+echo
+echo '== HTTPS =='; curl -sS -o /dev/null -w 'Status %{{http_code}} in %{{time_total}}s\n' --max-time 8 https://example.org || echo 'kein Zugriff'
+"""
+tags = ["lesen"]
+
+[[menu.items]]
+key = "D"
+icon = "≣"
+label = "DNS-Einstellungen"
+run = "resolvectl status 2>/dev/null | head -30 || cat /etc/resolv.conf"
+tags = ["lesen"]
+
+# ----------------------------------------------------------------- Hardware
+[[menu]]
+id = "hardware"
+title = "Hardware"
+
+[[menu.items]]
+key = "d"
+icon = "▤"
+label = "Datentraeger"
+run = "lsblk -o NAME,SIZE,FSTYPE,MOUNTPOINT,LABEL"
+requires = ["lsblk"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "u"
+icon = "◆"
+label = "USB-Geraete"
+run = "lsusb"
+requires = ["lsusb"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "p"
+icon = "◆"
+label = "PCI-Geraete"
+run = "lspci"
+requires = ["lspci"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "c"
+icon = "⚙"
+label = "Prozessor"
+run = "lscpu | head -25"
+requires = ["lscpu"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "m"
+icon = "▣"
+label = "Arbeitsspeicher"
+run = "free -h; echo; sudo dmidecode -t memory 2>/dev/null | grep -E 'Size|Speed|Type:' | head -20"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "t"
+icon = "◔"
+label = "Temperaturen"
+run = "sensors 2>/dev/null || cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | awk '{printf \"%.1f C\\n\", $1/1000}' || echo 'Keine Sensoren gefunden.'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "a"
+icon = "◉"
+label = "Akku"
+run = "upower -i $(upower -e 2>/dev/null | grep -m1 BAT) 2>/dev/null | grep -E 'state|percentage|time to' || acpi -b 2>/dev/null || echo 'Kein Akku gefunden.'"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "g"
+icon = "▱"
+label = "Grafikkarte"
+run = "lspci | grep -iE 'vga|3d|display'"
+requires = ["lspci"]
+tags = ["lesen"]
+
+[[menu.items]]
+key = "n"
+icon = "⌖"
+label = "Netzwerkkarten"
+run = "ip -brief link; echo; lspci | grep -iE 'ethernet|network' 2>/dev/null"
+tags = ["lesen"]
+
+[[menu.items]]
+key = "s"
+icon = "▤"
+label = "Gesundheit der Platte"
+run = "sudo smartctl -H -i {geraet} 2>/dev/null || echo 'smartctl fehlt oder kein Zugriff.'"
+interactive = true
+[[menu.items.prompts]]
+name = "geraet"
+label = "Geraet"
+default = "/dev/sda"
+
+# ----------------------------------------------------------- Text und Daten
+[[menu]]
+id = "text"
+title = "Text und Daten"
+
+[[menu.items]]
+key = "g"
+icon = "◆"
+label = "In Dateien suchen"
+run = "grep -rnI --color=always --exclude-dir=.git -e {muster} . | head -100"
+[[menu.items.prompts]]
+name = "muster"
+label = "Suchmuster"
+
+[[menu.items]]
+key = "e"
+icon = "✎"
+label = "In einer Datei ersetzen"
+desc = "Legt vorher eine Sicherung .bak an."
+run = "sed -i.bak 's|'{alt}'|'{neu}'|g' {datei} && echo 'Ersetzt. Sicherung: {datei}.bak' && grep -n --color=always -F {neu} {datei} | head -20"
+confirm = "Text in der Datei ersetzen?"
+[[menu.items.prompts]]
+name = "datei"
+label = "Datei"
+[[menu.items.prompts]]
+name = "alt"
+label = "Alter Text"
+[[menu.items.prompts]]
+name = "neu"
+label = "Neuer Text"
+
+[[menu.items]]
+key = "z"
+icon = "◆"
+label = "Zeilen, Woerter, Zeichen zaehlen"
+run = "wc -lwc {datei}"
+[[menu.items.prompts]]
+name = "datei"
+label = "Datei"
+
+[[menu.items]]
+key = "s"
+icon = "≣"
+label = "Sortieren, Doppelte entfernen"
+run = "sort -u {datei} | head -60"
+[[menu.items.prompts]]
+name = "datei"
+label = "Datei"
+
+[[menu.items]]
+key = "D"
+icon = "±"
+label = "Doppelte Zeilen finden"
+run = "sort {datei} | uniq -d | head -40"
+[[menu.items.prompts]]
+name = "datei"
+label = "Datei"
+
+[[menu.items]]
+key = "h"
+icon = "≣"
+label = "Anfang und Ende ansehen"
+run = "echo '== erste 20 =='; head -20 {datei}; echo; echo '== letzte 20 =='; tail -20 {datei}"
+[[menu.items.prompts]]
+name = "datei"
+label = "Datei"
+
+[[menu.items]]
+key = "j"
+icon = "◇"
+label = "JSON huebsch anzeigen"
+run = "jq -C . {datei} | head -120"
+requires = ["jq"]
+[[menu.items.prompts]]
+name = "datei"
+label = "JSON-Datei"
+
+[[menu.items]]
+key = "t"
+icon = "▤"
+label = "CSV als Tabelle"
+run = "column -t -s, {datei} | head -40"
+requires = ["column"]
+[[menu.items.prompts]]
+name = "datei"
+label = "CSV-Datei"
+
+[[menu.items]]
+key = "v"
+icon = "±"
+label = "Zwei Dateien vergleichen"
+run = "diff --color=always -u {a} {b} | head -120 || true"
+[[menu.items.prompts]]
+name = "a"
+label = "Datei A"
+[[menu.items.prompts]]
+name = "b"
+label = "Datei B"
+
+[[menu.items]]
+key = "w"
+icon = "◆"
+label = "Haeufigste Woerter"
+run = "tr -cs '[:alnum:]' '\\n' < {datei} | tr '[:upper:]' '[:lower:]' | sort | uniq -c | sort -rn | head -25"
+[[menu.items.prompts]]
+name = "datei"
+label = "Datei"
+
+[[menu.items]]
+key = "p"
+icon = "◆"
+label = "Pruefsumme"
+run = "sha256sum {datei}"
+[[menu.items.prompts]]
+name = "datei"
+label = "Datei"
+
+# ---------------------------------------------------------------- Archive
+[[menu]]
+id = "archive"
+title = "Archive"
+
+[[menu.items]]
+key = "l"
+icon = "≣"
+label = "Hineinschauen"
+desc = "Zeigt den Inhalt, ohne zu entpacken."
+run = """
+case {datei} in
+  *.tar.gz|*.tgz|*.tar.bz2|*.tar.xz|*.tar) tar tvf {datei} | head -60 ;;
+  *.zip) unzip -l {datei} | head -60 ;;
+  *.7z)  7z l {datei} | head -60 ;;
+  *.rar) unrar l {datei} | head -60 ;;
+  *) echo 'Unbekanntes Format.' ;;
+esac
+"""
+[[menu.items.prompts]]
+name = "datei"
+label = "Archivdatei"
+
+[[menu.items]]
+key = "x"
+icon = "↓"
+label = "Entpacken"
+desc = "Erkennt das Format selbst, packt in einen eigenen Ordner."
+run = """
+ziel="${{1:-}}"
+set -- {datei}
+name=$(basename "$1"); ziel="${{name%%.*}}"
+mkdir -p "$ziel"
+case "$1" in
+  *.tar.gz|*.tgz)  tar xzf "$1" -C "$ziel" ;;
+  *.tar.bz2)       tar xjf "$1" -C "$ziel" ;;
+  *.tar.xz)        tar xJf "$1" -C "$ziel" ;;
+  *.tar)           tar xf  "$1" -C "$ziel" ;;
+  *.zip)           unzip -q "$1" -d "$ziel" ;;
+  *.7z)            7z x -o"$ziel" "$1" ;;
+  *.rar)           unrar x "$1" "$ziel/" ;;
+  *.gz)            gunzip -k "$1" ;;
+  *) echo 'Unbekanntes Format.'; exit 1 ;;
+esac
+echo "Entpackt nach: $ziel"; ls -la "$ziel" | head -20
+"""
+[[menu.items.prompts]]
+name = "datei"
+label = "Archivdatei"
+
+[[menu.items]]
+key = "c"
+icon = "+"
+label = "tar.gz aus Ordner"
+run = "tar czf {name}.tar.gz {ordner} && ls -lh {name}.tar.gz"
+[[menu.items.prompts]]
+name = "ordner"
+label = "Ordner"
+[[menu.items.prompts]]
+name = "name"
+label = "Name des Archivs (ohne Endung)"
+
+[[menu.items]]
+key = "z"
+icon = "+"
+label = "zip aus Ordner"
+run = "zip -r {name}.zip {ordner} >/dev/null && ls -lh {name}.zip"
+requires = ["zip"]
+[[menu.items.prompts]]
+name = "ordner"
+label = "Ordner"
+[[menu.items.prompts]]
+name = "name"
+label = "Name des Archivs (ohne Endung)"
+
+[[menu.items]]
+key = "t"
+icon = "◆"
+label = "Archiv auf Fehler pruefen"
+run = "gzip -t {datei} 2>&1 && echo 'in Ordnung' || unzip -t {datei} | tail -3"
+[[menu.items.prompts]]
+name = "datei"
+label = "Archivdatei"
+
+# ----------------------------------------------------------------- Medien
+[[menu]]
+id = "medien"
+title = "Medien"
+subtitle = "ffmpeg und ImageMagick"
+
+[[menu.items]]
+heading = "Ansehen"
+
+[[menu.items]]
+key = "i"
+icon = "◆"
+label = "Infos zu einer Mediendatei"
+run = "ffprobe -hide_banner {datei} 2>&1 | head -30"
+requires = ["ffprobe"]
+[[menu.items.prompts]]
+name = "datei"
+label = "Datei"
+
+[[menu.items]]
+key = "b"
+icon = "◆"
+label = "Infos zu einem Bild"
+run = "identify -verbose {datei} 2>/dev/null | head -25 || file {datei}"
+[[menu.items.prompts]]
+name = "datei"
+label = "Bilddatei"
+
+[[menu.items]]
+heading = "Video und Audio"
+
+[[menu.items]]
+key = "v"
+icon = "▷"
+label = "Video nach MP4 wandeln"
+run = "ffmpeg -hide_banner -i {datei} -c:v libx264 -crf 23 -preset medium -c:a aac {datei}.mp4 && ls -lh {datei}.mp4"
+requires = ["ffmpeg"]
+[[menu.items.prompts]]
+name = "datei"
+label = "Videodatei"
+
+[[menu.items]]
+key = "a"
+icon = "♪"
+label = "Tonspur herausholen"
+run = "ffmpeg -hide_banner -i {datei} -vn -c:a libmp3lame -q:a 2 {datei}.mp3 && ls -lh {datei}.mp3"
+requires = ["ffmpeg"]
+[[menu.items.prompts]]
+name = "datei"
+label = "Videodatei"
+
+[[menu.items]]
+key = "s"
+icon = "✂"
+label = "Stueck herausschneiden"
+run = "ffmpeg -hide_banner -ss {start} -t {dauer} -i {datei} -c copy schnitt_{dauer}s.mp4 && ls -lh schnitt_{dauer}s.mp4"
+requires = ["ffmpeg"]
+[[menu.items.prompts]]
+name = "datei"
+label = "Videodatei"
+[[menu.items.prompts]]
+name = "start"
+label = "Startzeit (z. B. 00:01:30)"
+quote = false
+[[menu.items.prompts]]
+name = "dauer"
+label = "Dauer in Sekunden"
+quote = false
+
+[[menu.items]]
+key = "g"
+icon = "▷"
+label = "GIF aus Video"
+run = "ffmpeg -hide_banner -i {datei} -vf 'fps=12,scale=640:-1:flags=lanczos' -loop 0 {datei}.gif && ls -lh {datei}.gif"
+requires = ["ffmpeg"]
+[[menu.items.prompts]]
+name = "datei"
+label = "Videodatei"
+
+[[menu.items]]
+key = "k"
+icon = "◆"
+label = "Standbild aus Video"
+run = "ffmpeg -hide_banner -ss {zeit} -i {datei} -frames:v 1 standbild.png && ls -lh standbild.png"
+requires = ["ffmpeg"]
+[[menu.items.prompts]]
+name = "datei"
+label = "Videodatei"
+[[menu.items.prompts]]
+name = "zeit"
+label = "Zeitpunkt (z. B. 00:00:10)"
+quote = false
+
+[[menu.items]]
+heading = "Bilder"
+
+[[menu.items]]
+key = "r"
+icon = "▱"
+label = "Bild verkleinern"
+run = "convert {datei} -resize {breite} klein_{breite}.png && ls -lh klein_{breite}.png"
+requires = ["convert"]
+[[menu.items.prompts]]
+name = "datei"
+label = "Bilddatei"
+[[menu.items.prompts]]
+name = "breite"
+label = "Breite in Pixeln"
+default = "1280"
+quote = false
+
+[[menu.items]]
+key = "j"
+icon = "▱"
+label = "Nach JPG wandeln"
+run = "convert {datei} -quality 88 {datei}.jpg && ls -lh {datei}.jpg"
+requires = ["convert"]
+[[menu.items.prompts]]
+name = "datei"
+label = "Bilddatei"
+
+[[menu.items]]
+key = "P"
+icon = "▤"
+label = "Alle Bilder hier in ein PDF"
+run = "convert *.jpg *.png bilder.pdf 2>/dev/null && ls -lh bilder.pdf || echo 'Keine Bilder gefunden.'"
+requires = ["convert"]
+
+[[menu.items]]
+key = "A"
+icon = "▱"
+label = "Alle Bilder hier verkleinern"
+desc = "Kopien in ./klein/, die Originale bleiben unangetastet."
+run = """
+mkdir -p klein
+n=0
+for f in *.jpg *.jpeg *.png; do
+  [ -e "$f" ] || continue
+  convert "$f" -resize '1600x1600>' "klein/$f" && n=$((n+1))
+done
+echo "$n Bilder nach ./klein/ geschrieben."
+"""
+requires = ["convert"]
+
 '''
 
 
@@ -3501,9 +4425,11 @@ class App:
                 return
             values = res
         cmd = substitute(template, values)
-        open_names = [n for n in placeholders(cmd)]
+        # Aus der Vorlage ermitteln, nicht aus dem Ergebnis: sonst gelten
+        # eingesetzte Werte wie curls %{http_code} als fehlende Platzhalter.
+        open_names = sorted({n for n in placeholders(template) if n not in values})
         if open_names:
-            self.notify("Platzhalter ohne Wert: %s" % ", ".join(sorted(set(open_names))),
+            self.notify("Platzhalter ohne Wert: %s" % ", ".join(open_names),
                         "warn", 6)
         if item.confirm:
             if not self.confirm(item.confirm, cmd, danger="gefaehrlich" in item.tags):
