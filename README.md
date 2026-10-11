@@ -59,9 +59,11 @@ reicht `python3 -m pip install --user tomli`.
 |---|---|
 | `ci: command not found` | `~/.local/bin` fehlt im `PATH`: `echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc` (bzw. `~/.bashrc`), dann neue Shell |
 | Verzeichniswechsel wirkt nach dem Beenden nicht | Die `source`-Zeile fehlt in der rc-Datei **deiner** Shell. Der Installer trägt sie dort ein; von Hand: `source "${XDG_CONFIG_HOME:-$HOME/.config}/ci-shell/shell-init.sh"` |
-| Hinter CI scheint das Fenster dahinter durch | Dein Terminal ist transparent, CI lässt den Hintergrund durch. `Strg-B` schaltet auf einen deckenden um, dauerhaft: `ci --opaque` oder `opaque = true` in `menu.toml` |
+| Hinter CI scheint das Fenster dahinter durch | Dein Terminal ist transparent, CI lässt den Hintergrund durch. `Strg-B` schaltet auf einen deckenden um, dauerhaft: `ci --aliases        deine Aliase aus ~/.zshrc mitladen
+ci --opaque` oder `opaque = true` in `menu.toml` |
 | Rahmen und Symbole sind Buchstabensalat | `ci --ascii`, oder dauerhaft in `menu.toml`: `glyphs = "ascii"` |
 | „Terminal zu klein" | CI braucht mindestens 46x14 Zeichen |
+| Meine eigenen Aliase fehlen in CI | CI startet die Shell ohne deine rc-Datei. `ci --aliases` oder `shell_aliases = true` in `menu.toml` lädt sie mit |
 | fish als Shell | CI läuft normal, nur die Shell-Funktion für den Verzeichniswechsel gibt es bisher nur für bash und zsh |
 
 ## Die Oberfläche
@@ -190,12 +192,15 @@ ci --check        # Menüs, Anzahl Einträge, doppelte oder belegte Hotkeys
 
 ## Mitgelieferte Menüs
 
-Git (Status, Diff, Log-Graph, Commit, Branches, Remote, Stash) · Docker
-(Container, Logs, Shell hinein, Compose, Prune) · Entwicklung (Tests, Linter,
-make, npm-Skripte, Versionen, venv) · System (Überblick, Platten, Speicher,
-Dienste, Journal) · Netzwerk (Adressen, offene Ports, DNS, Ping, HTTP-Check) ·
-Dateien (suchen, durchsuchen, Platzfresser, ansehen, bearbeiten) · Prozesse
-(Top-Listen, suchen, beenden) — zusammen über 100 Befehle.
+**34 Bereiche, 377 Einträge:** Git · Docker · Entwicklung · System ·
+Netzwerk · Dateien · Prozesse · Pakete (apt) · Dienste (systemd) · SSH ·
+WLAN · Hardware · Text und Daten · Archive · Medien · Zsh und Shell ·
+Benutzer und Rechte · Sicherheit prüfen · Finden · Übertragen und Web ·
+Netzwerk-Analyse · Python · Node · Datenbanken · Rechnen und Umwandeln ·
+Laufwerke · Sichern · Logs und Beobachten · Zeit · Oberfläche.
+
+Jeder mitgelieferte Shell-Befehl wird vor der Veröffentlichung maschinell
+gegen `bash -n` geprüft.
 
 Dazu Favoriten (`*`), Historie (jeder Befehl wird mitgeschrieben und ist mit
 `⏎` wieder startbar) und ein Ordner-Browser.
